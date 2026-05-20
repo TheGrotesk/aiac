@@ -2,6 +2,8 @@
 
 Run AI agent workflows defined in YAML files.
 
+**[📖 Documentation](https://docs-smoky-theta.vercel.app)** — full reference, patterns, and examples.
+
 ## Install
 
 ```bash
