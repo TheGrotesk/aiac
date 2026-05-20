@@ -1,0 +1,1924 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>aiac — AI as Code</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/yaml.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/bash.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/typescript.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --sidebar-w: 260px;
+      --sidebar-bg: #0f1117;
+      --sidebar-border: #1e2030;
+      --content-bg: #ffffff;
+      --text: #1a1a2e;
+      --text-muted: #6b7280;
+      --accent: #6366f1;
+      --accent-light: #eef2ff;
+      --accent-dim: #818cf8;
+      --green: #10b981;
+      --yellow: #f59e0b;
+      --red: #ef4444;
+      --blue: #3b82f6;
+      --border: #e5e7eb;
+      --code-bg: #f8f9fa;
+      --tag-bg: #f3f4f6;
+      --radius: 6px;
+      --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      --mono: 'SF Mono', 'Fira Code', 'Cascadia Code', Consolas, monospace;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: var(--font);
+      font-size: 15px;
+      line-height: 1.7;
+      color: var(--text);
+      background: var(--content-bg);
+      display: flex;
+    }
+
+    /* ── Sidebar ── */
+    .sidebar {
+      width: var(--sidebar-w);
+      min-height: 100vh;
+      background: var(--sidebar-bg);
+      border-right: 1px solid var(--sidebar-border);
+      position: fixed;
+      top: 0; left: 0; bottom: 0;
+      overflow-y: auto;
+      padding: 0 0 40px;
+      z-index: 100;
+    }
+
+    .sidebar::-webkit-scrollbar { width: 4px; }
+    .sidebar::-webkit-scrollbar-track { background: transparent; }
+    .sidebar::-webkit-scrollbar-thumb { background: #2a2d3e; border-radius: 2px; }
+
+    .sidebar-logo {
+      padding: 20px 20px 16px;
+      border-bottom: 1px solid var(--sidebar-border);
+      margin-bottom: 8px;
+    }
+
+    .sidebar-logo .wordmark {
+      font-size: 20px;
+      font-weight: 700;
+      color: #fff;
+      letter-spacing: -0.5px;
+    }
+
+    .sidebar-logo .wordmark span { color: var(--accent-dim); }
+    .sidebar-logo .tagline { font-size: 11px; color: #6b7280; margin-top: 2px; }
+
+    .nav-section {
+      padding: 16px 12px 4px;
+    }
+
+    .nav-section-title {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #4b5563;
+      padding: 0 8px;
+      margin-bottom: 4px;
+    }
+
+    .nav-section a {
+      display: block;
+      padding: 5px 8px;
+      border-radius: 4px;
+      font-size: 13px;
+      color: #9ca3af;
+      text-decoration: none;
+      transition: background 0.12s, color 0.12s;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .nav-section a:hover { background: #1e2030; color: #e5e7eb; }
+    .nav-section a.active { background: #1e2942; color: var(--accent-dim); }
+
+    /* ── Main content ── */
+    .main {
+      margin-left: var(--sidebar-w);
+      flex: 1;
+      min-width: 0;
+    }
+
+    .content {
+      max-width: 860px;
+      padding: 56px 56px 120px;
+    }
+
+    /* ── Typography ── */
+    h1 {
+      font-size: 34px;
+      font-weight: 800;
+      letter-spacing: -0.8px;
+      color: #0f172a;
+      margin-bottom: 12px;
+      line-height: 1.2;
+    }
+
+    h2 {
+      font-size: 24px;
+      font-weight: 700;
+      letter-spacing: -0.4px;
+      color: #0f172a;
+      margin-top: 56px;
+      margin-bottom: 16px;
+      padding-top: 56px;
+      border-top: 1px solid var(--border);
+      scroll-margin-top: 24px;
+    }
+
+    h2:first-of-type { margin-top: 40px; }
+
+    h3 {
+      font-size: 17px;
+      font-weight: 700;
+      color: #1e293b;
+      margin-top: 32px;
+      margin-bottom: 10px;
+      scroll-margin-top: 24px;
+    }
+
+    h4 {
+      font-size: 14px;
+      font-weight: 700;
+      color: #374151;
+      margin-top: 24px;
+      margin-bottom: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    p { margin-bottom: 14px; color: #374151; }
+
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    ul, ol { padding-left: 20px; margin-bottom: 14px; color: #374151; }
+    li { margin-bottom: 4px; }
+
+    strong { font-weight: 600; color: #1e293b; }
+
+    code {
+      font-family: var(--mono);
+      font-size: 0.85em;
+      background: var(--tag-bg);
+      border: 1px solid #e5e7eb;
+      border-radius: 3px;
+      padding: 1px 5px;
+      color: #c026d3;
+    }
+
+    /* ── Code blocks ── */
+    .code-block {
+      position: relative;
+      margin: 16px 0 24px;
+      border-radius: var(--radius);
+      overflow: hidden;
+      border: 1px solid #1e2030;
+    }
+
+    .code-block pre {
+      margin: 0;
+      overflow-x: auto;
+    }
+
+    .code-block pre code {
+      font-family: var(--mono);
+      font-size: 13px;
+      background: transparent;
+      border: none;
+      padding: 0;
+      color: inherit;
+      border-radius: 0;
+      display: block;
+      padding: 18px 20px;
+      line-height: 1.6;
+    }
+
+    .code-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #161b27;
+      border-bottom: 1px solid #1e2030;
+      padding: 8px 14px;
+    }
+
+    .code-label {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: #6b7280;
+    }
+
+    .copy-btn {
+      font-size: 11px;
+      background: #1e2742;
+      border: 1px solid #2a3050;
+      color: #9ca3af;
+      border-radius: 4px;
+      padding: 3px 8px;
+      cursor: pointer;
+      transition: all 0.12s;
+      font-family: var(--font);
+    }
+
+    .copy-btn:hover { background: #273456; color: #e5e7eb; }
+    .copy-btn.copied { color: var(--green); border-color: var(--green); }
+
+    /* ── Hero ── */
+    .hero {
+      padding: 48px 0 32px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 8px;
+    }
+
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--accent-light);
+      color: var(--accent);
+      font-size: 12px;
+      font-weight: 600;
+      padding: 4px 10px;
+      border-radius: 20px;
+      margin-bottom: 16px;
+      border: 1px solid #c7d2fe;
+    }
+
+    .hero p {
+      font-size: 17px;
+      color: #4b5563;
+      max-width: 600px;
+      line-height: 1.6;
+    }
+
+    /* ── Cards ── */
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+      gap: 14px;
+      margin: 20px 0;
+    }
+
+    .card {
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px 18px;
+      transition: border-color 0.12s, box-shadow 0.12s;
+    }
+
+    .card:hover {
+      border-color: #c7d2fe;
+      box-shadow: 0 1px 8px rgba(99,102,241,0.08);
+    }
+
+    .card-icon { font-size: 20px; margin-bottom: 8px; }
+    .card-title { font-size: 14px; font-weight: 700; color: #1e293b; margin-bottom: 4px; }
+    .card-desc { font-size: 13px; color: var(--text-muted); line-height: 1.5; }
+
+    /* ── Tables ── */
+    .table-wrap { overflow-x: auto; margin: 16px 0 24px; }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13.5px;
+    }
+
+    thead tr { background: #f8fafc; }
+
+    th {
+      text-align: left;
+      padding: 10px 14px;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: #6b7280;
+      border-bottom: 2px solid var(--border);
+    }
+
+    td {
+      padding: 10px 14px;
+      border-bottom: 1px solid #f1f5f9;
+      vertical-align: top;
+      color: #374151;
+    }
+
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: #fafbff; }
+
+    td code { font-size: 12px; }
+
+    .badge {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 1px 7px;
+      border-radius: 10px;
+      line-height: 1.6;
+    }
+
+    .badge-required { background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; }
+    .badge-optional { background: #f0fdf4; color: #16a34a; border: 1px solid #bbf7d0; }
+    .badge-type { background: #f0f9ff; color: #0369a1; border: 1px solid #bae6fd; font-family: var(--mono); }
+
+    /* ── Callouts ── */
+    .callout {
+      display: flex;
+      gap: 12px;
+      padding: 14px 16px;
+      border-radius: var(--radius);
+      margin: 16px 0;
+      font-size: 14px;
+    }
+
+    .callout-icon { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
+    .callout-content { color: #374151; }
+    .callout-content strong { display: block; margin-bottom: 2px; }
+
+    .callout-info { background: #eff6ff; border: 1px solid #bfdbfe; }
+    .callout-warn { background: #fffbeb; border: 1px solid #fde68a; }
+    .callout-tip  { background: #f0fdf4; border: 1px solid #bbf7d0; }
+
+    /* ── Stage type header ── */
+    .stage-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+
+    .stage-type-badge {
+      font-family: var(--mono);
+      font-size: 13px;
+      font-weight: 700;
+      background: #0f1117;
+      color: #a5b4fc;
+      padding: 3px 10px;
+      border-radius: 4px;
+      border: 1px solid #2a2d4e;
+    }
+
+    /* ── Variable pills ── */
+    .var-grid {
+      display: grid;
+      gap: 10px;
+      margin: 14px 0;
+    }
+
+    .var-row {
+      display: grid;
+      grid-template-columns: 220px 1fr;
+      gap: 12px;
+      align-items: start;
+      padding: 10px 14px;
+      background: #f8fafc;
+      border-radius: var(--radius);
+      border: 1px solid #e5e7eb;
+      font-size: 13.5px;
+    }
+
+    .var-name {
+      font-family: var(--mono);
+      font-size: 12.5px;
+      color: #6d28d9;
+      font-weight: 600;
+    }
+
+    .var-desc { color: #374151; }
+
+    /* ── Divider ── */
+    hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
+
+    /* ── Flow diagram ── */
+    .flow {
+      display: flex;
+      align-items: center;
+      gap: 0;
+      flex-wrap: wrap;
+      margin: 16px 0;
+      font-size: 13px;
+    }
+
+    .flow-step {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 6px;
+      padding: 6px 12px;
+      font-weight: 600;
+      color: #1e293b;
+      white-space: nowrap;
+    }
+
+    .flow-step.accent { background: var(--accent-light); border-color: #c7d2fe; color: var(--accent); }
+
+    .flow-arrow {
+      padding: 0 8px;
+      color: #9ca3af;
+      font-size: 16px;
+    }
+
+    /* ── Responsive ── */
+    @media (max-width: 900px) {
+      .sidebar { display: none; }
+      .main { margin-left: 0; }
+      .content { padding: 32px 24px 80px; }
+    }
+
+    /* ── Active section tracking ── */
+    section { scroll-margin-top: 24px; }
+  </style>
+</head>
+<body>
+
+<!-- ── Sidebar ─────────────────────────────────────────────────────────────── -->
+<nav class="sidebar">
+  <div class="sidebar-logo">
+    <div class="wordmark">ai<span>ac</span></div>
+    <div class="tagline">AI as Code · v0.1.0</div>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-section-title">Getting Started</div>
+    <a href="#overview">Overview</a>
+    <a href="#installation">Installation</a>
+    <a href="#quickstart">Quick Start</a>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-section-title">Core Concepts</div>
+    <a href="#workflow-structure">Workflow Structure</a>
+    <a href="#interpolation">Interpolation</a>
+    <a href="#templates">Templates</a>
+    <a href="#routing">Conditional Routing</a>
+    <a href="#checkpoints">Checkpoints</a>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-section-title">Stage Reference</div>
+    <a href="#stage-llm">llm</a>
+    <a href="#stage-shell">shell</a>
+    <a href="#stage-file">file</a>
+    <a href="#stage-http">http</a>
+    <a href="#stage-input">input</a>
+    <a href="#stage-loop">loop</a>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-section-title">CLI Reference</div>
+    <a href="#cli-run">aiac run</a>
+    <a href="#cli-validate">aiac validate</a>
+    <a href="#cli-init">aiac init</a>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-section-title">Patterns</div>
+    <a href="#pattern-plan-approve">Plan → Approve → Build</a>
+    <a href="#pattern-fix-loop">Autonomous Fix Loop</a>
+    <a href="#pattern-multi-provider">Multi-Provider Pipeline</a>
+    <a href="#pattern-human-gate">Human Approval Gate</a>
+    <a href="#pattern-claude-code">Delegate to Claude Code</a>
+    <a href="#pattern-codex">Delegate to Codex</a>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-section-title">GitHub Actions</div>
+    <a href="#gh-overview">Overview</a>
+    <a href="#gh-workflow">PR Review Workflow</a>
+    <a href="#gh-option-a">Option A — self-posting</a>
+    <a href="#gh-option-b">Option B — action posts</a>
+    <a href="#gh-tips">Tips & gotchas</a>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-section-title">Use Cases</div>
+    <a href="#uc-code-review">Code Review</a>
+    <a href="#uc-feature-dev">Feature Development</a>
+    <a href="#uc-incident">Incident Response</a>
+    <a href="#uc-content">Content Pipeline</a>
+  </div>
+</nav>
+
+<!-- ── Main ────────────────────────────────────────────────────────────────── -->
+<div class="main">
+<div class="content">
+
+<!-- ═══════════════════════════════════════════════════════════════════════════
+     HERO
+═══════════════════════════════════════════════════════════════════════════ -->
+<section id="overview">
+<div class="hero">
+  <div class="hero-badge">⚡ v0.1.0</div>
+  <h1>AI as Code</h1>
+  <p>Define AI agent workflows in YAML. Chain LLMs, shell commands, file operations, and HTTP calls into repeatable pipelines — with human approval gates, branching logic, and built-in resume from failure.</p>
+</div>
+
+<div class="cards">
+  <div class="card">
+    <div class="card-icon">🧩</div>
+    <div class="card-title">6 Stage Types</div>
+    <div class="card-desc">LLM, shell, file, HTTP, input, and loop — compose anything.</div>
+  </div>
+  <div class="card">
+    <div class="card-icon">🤖</div>
+    <div class="card-title">3 Providers</div>
+    <div class="card-desc">Anthropic, OpenAI, and Gemini — mix models in a single workflow.</div>
+  </div>
+  <div class="card">
+    <div class="card-icon">🔀</div>
+    <div class="card-title">Conditional Routing</div>
+    <div class="card-desc">Branch on any JS expression evaluated against stage output.</div>
+  </div>
+  <div class="card">
+    <div class="card-icon">💾</div>
+    <div class="card-title">Checkpoints</div>
+    <div class="card-desc">Auto-resume from the last completed stage after any failure.</div>
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════════════════
+     INSTALLATION
+═══════════════════════════════════════════════════════════════════════════ -->
+<h2 id="installation">Installation</h2>
+
+<div class="code-block">
+  <div class="code-header"><span class="code-label">bash</span><button class="copy-btn">Copy</button></div>
+  <pre><code class="language-bash">git clone https://github.com/your-org/aiac
+cd aiac
+npm install
+npm run build
+npm link          # makes `aiac` available globally</code></pre>
+</div>
+
+<p>Set your provider API keys as environment variables, or put them in a <code>.env</code> file in the directory you run <code>aiac</code> from:</p>
+
+<div class="code-block">
+  <div class="code-header"><span class="code-label">.env</span><button class="copy-btn">Copy</button></div>
+  <pre><code class="language-bash">ANTHROPIC_API_KEY=sk-ant-...
+OPENAI_API_KEY=sk-...
+GEMINI_API_KEY=AIza...</code></pre>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════════════
+     QUICK START
+═══════════════════════════════════════════════════════════════════════════ -->
+<h2 id="quickstart">Quick Start</h2>
+
+<p>Create a workflow file, or scaffold one with <code>aiac init</code>:</p>
+
+<div class="code-block">
+  <div class="code-header"><span class="code-label">bash</span><button class="copy-btn">Copy</button></div>
+  <pre><code class="language-bash">aiac init my-workflow        # scaffold a starter YAML
+aiac validate my-workflow.yaml   # check for schema errors
+aiac run my-workflow.yaml --prompt "your input here"</code></pre>
+</div>
+
+<p>Here's the simplest possible workflow — a single LLM call:</p>
+
+<div class="code-block">
+  <div class="code-header"><span class="code-label">hello.yaml</span><button class="copy-btn">Copy</button></div>
+  <pre><code class="language-yaml">name: Hello World
+stages:
+  - id: greet
+    type: llm
+    provider: anthropic
+    model: claude-haiku-4-5-20251001
+    prompt: "Say hello to: {{input}}"
+    max_tokens: 100</code></pre>
+</div>
+
+<div class="code-block">
+  <div class="code-header"><span class="code-label">bash</span><button class="copy-btn">Copy</button></div>
+  <pre><code class="language-bash">aiac run hello.yaml --prompt "Alice"
+# → Hello, Alice! It's wonderful to meet you.</code></pre>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════════════
+     WORKFLOW STRUCTURE
+═══════════════════════════════════════════════════════════════════════════ -->
+<h2 id="workflow-structure">Workflow Structure</h2>
+
+<p>A workflow is a YAML file with the following top-level fields:</p>
+
+<div class="table-wrap">
+<table>
+  <thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead>
+  <tbody>
+    <tr><td><code>name</code></td><td><span class="badge badge-required">required</span></td><td>Human-readable workflow name, shown in the terminal.</td></tr>
+    <tr><td><code>description</code></td><td><span class="badge badge-optional">optional</span></td><td>Multi-line description printed at the start of a run.</td></tr>
+    <tr><td><code>version</code></td><td><span class="badge badge-optional">optional</span></td><td>Freeform version string (e.g. <code>"1.0"</code>).</td></tr>
+    <tr><td><code>import</code></td><td><span class="badge badge-optional">optional</span></td><td>Array of paths to template YAML files to import. Resolved relative to the workflow file.</td></tr>
+    <tr><td><code>templates</code></td><td><span class="badge badge-optional">optional</span></td><td>Inline key→string map of reusable prompt snippets. Overrides imported templates on conflict.</td></tr>
+    <tr><td><code>stages</code></td><td><span class="badge badge-required">required</span></td><td>Ordered list of stage objects. Must have at least one.</td></tr>
+  </tbody>
+</table>
+</div>
+
+<div class="code-block">
+  <div class="code-header"><span class="code-label">workflow.yaml — full structure</span><button class="copy-btn">Copy</button></div>
+  <pre><code class="language-yaml">name: My Workflow
+description: |
+  What this workflow does.
+version: "1.0"
+
+import:
+  - ./templates/personas.yaml
+  - ./templates/formats.yaml
+
+templates:
+  my_persona: You are a helpful expert. Be concise.
+
+stages:
+  - id: step1
+    type: llm
+    # ...
+  - id: step2
+    type: shell
+    # ...</code></pre>
+</div>
+
+<h3>Execution model</h3>
+<p>Stages run <strong>linearly</strong> by default — each stage's output becomes the next stage's <code>{{input}}</code>. You can override this with <a href="#routing"><code>next</code></a> conditions to branch or jump to any stage by ID.</p>
+
+<div class="flow">
+  <div class="flow-step">stage 1</div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-step">stage 2</div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-step">stage 3</div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-step accent">output</div>
+</div>
+
+<p>All outputs are stored in <code>ctx.stages</code> and remain accessible via interpolation for the entire run — regardless of branching.</p>
+
+<!-- ═══════════════════════════════════════════════════════════════════════════
+     INTERPOLATION
+═══════════════════════════════════════════════════════════════════════════ -->
+<h2 id="interpolation">Interpolation</h2>
+
+<p>Every string field in a workflow supports <code>{{variable}}</code> placeholders. They are resolved at execution time using the current context.</p>
+
+<div class="var-grid">
+  <div class="var-row">
+    <div class="var-name">{{input}}</div>
+    <div class="var-desc">The output of the previous stage (or the initial <code>--prompt</code> for the first stage).</div>
+  </div>
+  <div class="var-row">
+    <div class="var-name">{{stages.id.output}}</div>
+    <div class="var-desc">Output of any previously completed stage by its <code>id</code>. Available throughout the entire run, even after branching.</div>
+  </div>
+  <div class="var-row">
+    <div class="var-name">{{env.VAR_NAME}}</div>
+    <div class="var-desc">Environment variable. Reads from the process environment (including any <code>.env</code> file loaded with <code>--env-file</code>).</div>
+  </div>
+  <div class="var-row">
+    <div class="var-name">{{vars.KEY}}</div>
+    <div class="var-desc">Variables passed via <code>--var KEY=value</code> on the CLI, or set internally by the loop stage (<code>loop_iteration</code>, <code>loop_feedback</code>).</div>
+  </div>
+  <div class="var-row">
+    <div class="var-name">{{templates.name}}</div>
+    <div class="var-desc">Inline or imported template snippet by key. Expands to the full multi-line string.</div>
+  </div>
+  <div class="var-row">
+    <div class="var-name">{{timestamp}}</div>
+    <div class="var-desc">ISO timestamp of when the run started, with <code>:</code> and <code>.</code> replaced by <code>-</code>. Useful for unique filenames.</div>
+  </div>
+</div>
+
+<h3>Loop-specific variables</h3>
+<p>These are automatically set when inside a <a href="#stage-loop"><code>loop</code></a> stage:</p>
+
+<div class="var-grid">
+  <div class="var-row">
+    <div class="var-name">{{vars.loop_iteration}}</div>
+    <div class="var-desc">Current iteration number (1-based). Available in all sub-stage prompts and the <code>approve_message</code>.</div>
+  </div>
+  <div class="var-row">
+    <div class="var-name">{{vars.loop_feedback}}</div>
+    <div class="var-desc">Feedback text typed by the user during the approval prompt. Empty on the first iteration. Cleared automatically when the loop exits.</div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════════════
+     TEMPLATES
+═══════════════════════════════════════════════════════════════════════════ -->
+<h2 id="templates">Templates</h2>
+
+<p>Templates are reusable prompt snippets referenced with <code>{{templates.name}}</code>. They can be defined inline in the workflow or imported from separate files.</p>
+
+<h3>Inline templates</h3>
+
+<div class="code-block">
+  <div class="code-header"><span class="code-label">yaml</span><button class="copy-btn">Copy</button></div>
+  <pre><code class="language-yaml">templates:
+  senior_engineer: |
+    You are a senior software engineer.
+    Write minimal, targeted, production-ready code.
+  output_format: |
+    Output ONLY file content using === FILE: path === blocks.
+    No prose, no explanations.
+
+stages:
+  - id: implement
+    type: llm
+    provider: anthropic
+    model: claude-sonnet-4-6
+    system: "{{templates.senior_engineer}}\n{{templates.output_format}}"
+    prompt: "Implement: {{input}}"</code></pre>
+</div>
+
+<h3>Imported template files</h3>
+
+<p>Create a standalone YAML file with only a <code>templates:</code> block:</p>
+
+<div class="code-block">
+  <div class="code-header"><span class="code-label">templates/personas.yaml</span><button class="copy-btn">Copy</button></div>
+  <pre><code class="language-yaml">templates:
+  senior_engineer: You are a senior software engineer...
+  code_reviewer: You are an expert code reviewer...
+  sre: You are a Site Reliability Engineer...</code></pre>
+</div>
+
+<p>Then import it in your workflow:</p>
+
+<div class="code-block">
+  <div class="code-header"><span class="code-label">yaml</span><button class="copy-btn">Copy</button></div>
+  <pre><code class="language-yaml">import:
+  - ./templates/personas.yaml
+  - ./templates/formats.yaml</code></pre>
+</div>
+
+<div class="callout callout-info">
+  <div class="callout-icon">ℹ️</div>
+  <div class="callout-content"><strong>Merge precedence</strong> Later imports override earlier ones on key conflict. Inline <code>templates:</code> in the workflow always wins.</div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════════════
+     CONDITIONAL ROUTING
+═══════════════════════════════════════════════════════════════════════════ -->
+<h2 id="routing">Conditional Routing</h2>
+
+<p>Any stage can have a <code>next</code> array to route execution to a specific stage based on the output. Conditions are JavaScript expressions evaluated with <code>output</code> in scope.</p>
+
+<div class="code-block">
+  <div class="code-header"><span class="code-label">yaml</span><button class="copy-btn">Copy</button></div>
+  <pre><code class="language-yaml">- id: classify
+  type: llm
+  provider: anthropic
+  model: claude-haiku-4-5-20251001
+  system: "Reply with exactly one word: critical, warning, or ok"
+  prompt: "Classify this: {{input}}"
+  max_tokens: 10
+  next:
+    - condition: "output.toLowerCase().includes('critical')"
+      stage: escalate
+    - condition: "output.toLowerCase().includes('warning')"
+      stage: investigate
+    - stage: close_ticket    # no condition = default fallback</code></pre>
+</div>
+
+<p>Rules:</p>
+<ul>
+  <li>Conditions are evaluated in order — first match wins.</li>
+  <li>A <code>next</code> entry <strong>without</strong> a <code>condition</code> is the default fallback — it matches anything.</li>
+  <li>If no condition matches and there's no default, execution continues linearly to the next stage.</li>
+  <li>The <code>output</code> variable in the expression is the current stage's output string.</li>
+</ul>
+
+<div class="callout callout-warn">
+  <div class="callout-icon">⚠️</div>
+  <div class="callout-content"><strong>Skipped stages are not lost.</strong> Jumping from stage 2 to stage 5 doesn't erase stages 3–4 — they simply never run. All <em>completed</em> stage outputs remain accessible via <code>{{stages.id.output}}</code>.</div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════════════
+     CHECKPOINTS
+═══════════════════════════════════════════════════════════════════════════ -->
+<h2 id="checkpoints">Checkpoints</h2>
+
+<p>aiac automatically saves a checkpoint after every completed stage. If the workflow fails or is interrupted mid-run, you can resume from where it stopped — saving expensive LLM calls.</p>
+
+<p>Checkpoints are stored in <code>.aiac-checkpoints/</code> in the current working directory, keyed by a hash of the workflow path + prompt. Each checkpoint records completed stage outputs, current vars, and the next stage index.</p>
+
+<h3>Resume behavior</h3>
+
+<p>The next time you run the same workflow with the same prompt, aiac detects the checkpoint:</p>
+
+<div class="code-block">
+  <div class="code-header"><span class="code-label">terminal</span><button class="copy-btn">Copy</button></div>
+  <pre><code class="language-bash">Checkpoint found — started 2024-01-15T10:32:11, last updated 2024-01-15T10:38:44
+  Completed stages: analyze, approve_plan, create_plan
+
+Resume from checkpoint? (yes / no — "no" starts fresh) _</code></pre>
+</div>
+
+<h3>CLI flags</h3>
+
+<div class="table-wrap">
+<table>
+  <thead><tr><th>Flag</th><th>Behavior</th></tr></thead>
+  <tbody>
+    <tr><td><code>--resume</code></td><td>Silently resume from checkpoint without prompting.</td></tr>
+    <tr><td><code>--fresh</code></td><td>Ignore any existing checkpoint and start from the beginning.</td></tr>
+    <tr><td>(none)</td><td>Interactively ask if a checkpoint exists.</td></tr>
+  </tbody>
+</table>
+</div>
+
+<p>On successful completion, the checkpoint is automatically deleted.</p>
+
+<!-- ═══════════════════════════════════════════════════════════════════════════
+     STAGE: LLM
+═══════════════════════════════════════════════════════════════════════════ -->
+<h2 id="stage-llm">Stage: <code>llm</code></h2>
+
+<p>Calls an LLM provider and returns the response text as the stage output.</p>
+
+<div class="table-wrap">
+<table>
+  <thead><tr><th>Field</th><th>Status</th><th>Type</th><th>Description</th></tr></thead>
+  <tbody>
+    <tr><td><code>provider</code></td><td><span class="badge badge-required">required</span></td><td><span class="badge badge-type">anthropic | openai | gemini</span></td><td>Which API to use.</td></tr>
+    <tr><td><code>model</code></td><td><span class="badge badge-required">required</span></td><td><span class="badge badge-type">string</span></td><td>Model ID, e.g. <code>claude-sonnet-4-6</code>, <code>gpt-4o</code>, <code>gemini-2.0-flash</code>.</td></tr>
+    <tr><td><code>prompt</code></td><td><span class="badge badge-required">required</span></td><td><span class="badge badge-type">string</span></td><td>The user message. Supports interpolation.</td></tr>
+    <tr><td><code>system</code></td><td><span class="badge badge-optional">optional</span></td><td><span class="badge badge-type">string</span></td><td>System prompt. Supports interpolation (use for <code>{{templates.x}}</code>).</td></tr>
+    <tr><td><code>files</code></td><td><span class="badge badge-optional">optional</span></td><td><span class="badge badge-type">string[]</span></td><td>Glob patterns of files to inject as context before the prompt. See below.</td></tr>
+    <tr><td><code>temperature</code></td><td><span class="badge badge-optional">optional</span></td><td><span class="badge badge-type">number 0–2</span></td><td>Sampling temperature. Not supported by Claude 4 models.</td></tr>
+    <tr><td><code>max_tokens</code></td><td><span class="badge badge-optional">optional</span></td><td><span class="badge badge-type">integer</span></td><td>Maximum tokens to generate.</td></tr>
+    <tr><td><code>next</code></td><td><span class="badge badge-optional">optional</span></td><td><span class="badge badge-type">NextCondition[]</span></td><td>Conditional routing rules.</td></tr>
+  </tbody>
+</table>
+</div>
+
+<h3>Injecting codebase context with <code>files</code></h3>
+
+<p>The <code>files</code> array accepts glob patterns. Matched files are prepended to the prompt as XML blocks, giving the model full codebase context:</p>
+
+<div class="code-block">
+  <div class="code-header"><span class="code-label">yaml</span><button class="copy-btn">Copy</button></div>
+  <pre><code class="language-yaml">- id: audit
+  type: llm
+  provider: anthropic
+  model: claude-opus-4-7
+  files:
+    - src/**/*.ts
+    - src/**/*.tsx
+    - package.json
+  prompt: |
+    Audit the codebase above for security vulnerabilities.
+    Feature request: {{input}}</code></pre>
+</div>
+
+<p>Files are injected in this format:</p>
+
+<div class="code-block">
+  <div class="code-header"><span class="code-label">injected context format</span><button class="copy-btn">Copy</button></div>
+  <pre><code class="language-bash">&lt;file path="src/auth.ts"&gt;
+... file content ...
+&lt;/file&gt;
+&lt;file path="package.json"&gt;
+... file content ...
+&lt;/file&gt;</code></pre>
+</div>
+
+<div class="callout callout-warn">
+  <div class="callout-icon">⚠️</div>
+  <div class="callout-content"><strong>Size limits</strong> A warning is logged when total file content exceeds 100 KB. An error is thrown above 500 KB to prevent silent context truncation.</div>
+</div>
+
+<h3>Supported models</h3>
+
+<div class="table-wrap">
+<table>
+  <thead><tr><th>Provider</th><th>Recommended models</th></tr></thead>
+  <tbody>
+    <tr><td>anthropic</td><td><code>claude-opus-4-7</code>, <code>claude-sonnet-4-6</code>, <code>claude-haiku-4-5-20251001</code></td></tr>
+    <tr><td>openai</td><td><code>gpt-4o</code>, <code>gpt-4o-mini</code>, <code>o3</code></td></tr>
+    <tr><td>gemini</td><td><code>gemini-2.0-flash</code>, <code>gemini-2.0-pro</code></td></tr>
+  </tbody>
+</table>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════════════
+     STAGE: SHELL
+═══════════════════════════════════════════════════════════════════════════ -->
+<h2 id="stage-shell">Stage: <code>shell</code></h2>
+
+<p>Runs a shell command. stdout becomes the stage output. stderr is passed through but doesn't fail the stage.</p>
+
+<div class="table-wrap">
+<table>
+  <thead><tr><th>Field</th><th>Status</th><th>Type</th><th>Description</th></tr></thead>
+  <tbody>
+    <tr><td><code>command</code></td><td><span class="badge badge-required">required</span></td><td><span class="badge badge-type">string</span></td><td>Shell command. Supports interpolation. Multi-line YAML block scalars work.</td></tr>
+    <tr><td><code>workdir</code></td><td><span class="badge badge-optional">optional</span></td><td><span class="badge badge-type">string</span></td><td>Working directory for the command. Defaults to process CWD.</td></tr>
+    <tr><td><code>interactive</code></td><td><span class="badge badge-optional">optional</span></td><td><span class="badge badge-type">boolean</span></td><td>If <code>true</code>, spawns the process with <code>stdio: inherit</code> — the subprocess takes over the terminal. Workflow resumes when the process exits.</td></tr>
+    <tr><td><code>next</code></td><td><span class="badge badge-optional">optional</span></td><td><span class="badge badge-type">NextCondition[]</span></td><td>Conditional routing on stdout output.</td></tr>
+  </tbody>
+</table>
+</div>
+
+<p>All environment variables (including those from <code>.env</code>) are available in shell commands. Stage variables can be injected via interpolation:</p>
+
+<div class="code-block">
+  <div class="code-header"><span class="code-label">yaml</span><button class="copy-btn">Copy</button></div>
+  <pre><code class="language-yaml">- id: typecheck
+  type: shell
+  command: npx tsc --noEmit 2>&1 || true
+
+- id: deploy
+  type: shell
+  command: |
+    echo "Deploying to {{env.DEPLOY_ENV}}..."
+    git push origin main
+    curl -X POST {{env.DEPLOY_WEBHOOK}}</code></pre>
+</div>
+
+<h3>Interactive mode</h3>
+
+<p>Set <code>interactive: true</code> to hand off the terminal to the subprocess. The workflow pauses until the process exits:</p>
+
+<div class="code-block">
+  <div class="code-header"><span class="code-label">yaml</span><button class="copy-btn">Copy</button></div>
+  <pre><code class="language-yaml">- id: implement
+  type: shell
+  interactive: true
+  # Claude Code opens interactively. Type /exit when done to continue the workflow.
+  command: claude --model sonnet "$(cat /tmp/plan.txt)"</code></pre>
+</div>
+
+<div class="callout callout-tip">
+  <div class="callout-icon">💡</div>
+  <div class="callout-content"><strong>Use interactive: true with Claude Code</strong> to get a fully interactive implementation session mid-workflow. The workflow resumes automatically after you exit.</div>
+</div>
+
+<h3>Passing LLM output to shell commands</h3>
+
+<p>Avoid shell-escaping issues (backticks, quotes) by saving LLM output to a temp file first:</p>
+
+<div class="code-block">
+  <div class="code-header"><span class="code-label">yaml</span><button class="copy-btn">Copy</button></div>
+  <pre><code class="language-yaml">- id: save_output
+  type: file
+  action: write
+  path: /tmp/llm_output.txt
+  content: "{{stages.implement.output}}"
+
+- id: apply
+  type: shell
+  command: |
+    node -e "
+      const fs = require('fs'), path = require('path');
+      const text = fs.readFileSync('/tmp/llm_output.txt', 'utf-8');
+      const parts = text.split(/^=== FILE: (.+?) ===$/m);
+      for (let i = 1; i < parts.length; i += 2) {
+        const filePath = parts[i].trim();
+        const content = (parts[i+1] || '').replace(/^\n/, '');
+        fs.mkdirSync(path.dirname(filePath), { recursive: true });
+        fs.writeFileSync(filePath, content, 'utf-8');
+      }
+    "</code></pre>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════════════
+     STAGE: FILE
+═══════════════════════════════════════════════════════════════════════════ -->
+<h2 id="stage-file">Stage: <code>file</code></h2>
+
+<p>Reads, writes, or appends to a file on disk.</p>
+
+<div class="table-wrap">
+<table>
+  <thead><tr><th>Field</th><th>Status</th><th>Type</th><th>Description</th></tr></thead>
+  <tbody>
+    <tr><td><code>action</code></td><td><span class="badge badge-required">required</span></td><td><span class="badge badge-type">read | write | append</span></td><td>Operation to perform.</td></tr>
+    <tr><td><code>path</code></td><td><span class="badge badge-required">required</span></td><td><span class="badge badge-type">string</span></td><td>File path. Supports interpolation (e.g. <code>./reports/{{timestamp}}.md</code>).</td></tr>
+    <tr><td><code>content</code></td><td><span class="badge badge-optional">optional</span></td><td><span class="badge badge-type">string</span></td><td>Content to write/append. Required for <code>write</code> and <code>append</code>. Supports interpolation.</td></tr>
+    <tr><td><code>encoding</code></td><td><span class="badge badge-optional">optional</span></td><td><span class="badge badge-type">string</span></td><td>File encoding. Defaults to <code>utf-8</code>.</td></tr>
+    <tr><td><code>next</code></td><td><span class="badge badge-optional">optional</span></td><td><span class="badge badge-type">NextCondition[]</span></td><td>Conditional routing.</td></tr>
+  </tbody>
+</table>
+</div>
+
+<div class="code-block">
+  <div class="code-header"><span class="code-label">yaml</span><button class="copy-btn">Copy</button></div>
+  <pre><code class="language-yaml"># Write a report with a timestamped filename
+- id: save_report
+  type: file
+  action: write
+  path: ./reports/review-{{timestamp}}.md
+  content: |
+    # Code Review — {{timestamp}}
+
+    ## Analysis
+    {{stages.analyze.output}}
+
+    ## Suggestions
+    {{stages.suggest.output}}
+
+# Read a file for the next stage
+- id: read_config
+  type: file
+  action: read
+  path: ./config.json</code></pre>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════════════
+     STAGE: HTTP
+═══════════════════════════════════════════════════════════════════════════ -->
+<h2 id="stage-http">Stage: <code>http</code></h2>
+
+<p>Makes an HTTP request. The response body becomes the stage output.</p>
+
+<div class="table-wrap">
+<table>
+  <thead><tr><th>Field</th><th>Status</th><th>Type</th><th>Description</th></tr></thead>
+  <tbody>
+    <tr><td><code>method</code></td><td><span class="badge badge-required">required</span></td><td><span class="badge badge-type">GET | POST | PUT | DELETE | PATCH</span></td><td>HTTP method.</td></tr>
+    <tr><td><code>url</code></td><td><span class="badge badge-required">required</span></td><td><span class="badge badge-type">string</span></td><td>Request URL. Supports interpolation.</td></tr>
+    <tr><td><code>headers</code></td><td><span class="badge badge-optional">optional</span></td><td><span class="badge badge-type">object</span></td><td>Key-value header map. Values support interpolation.</td></tr>
+    <tr><td><code>body</code></td><td><span class="badge badge-optional">optional</span></td><td><span class="badge badge-type">any</span></td><td>Request body. Objects are JSON-serialized and <code>Content-Type: application/json</code> is set automatically. Supports deep interpolation.</td></tr>
+    <tr><td><code>next</code></td><td><span class="badge badge-optional">optional</span></td><td><span class="badge badge-type">NextCondition[]</span></td><td>Conditional routing on response body.</td></tr>
+  </tbody>
+</table>
+</div>
+
+<div class="code-block">
+  <div class="code-header"><span class="code-label">yaml — Slack notification</span><button class="copy-btn">Copy</button></div>
+  <pre><code class="language-yaml">- id: notify_slack
+  type: http
+  method: POST
+  url: "{{env.SLACK_WEBHOOK_URL}}"
+  headers:
+    Content-Type: application/json
+  body:
+    text: "Review complete"
+    blocks:
+      - type: section
+        text:
+          type: mrkdwn
+          text: "{{stages.analyze.output}}"</code></pre>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════════════
+     STAGE: INPUT
+═══════════════════════════════════════════════════════════════════════════ -->
+<h2 id="stage-input">Stage: <code>input</code></h2>
+
+<p>Pauses the workflow and prompts the user to type a response. The response becomes the stage output. Requires an interactive terminal (TTY).</p>
+
+<div class="table-wrap">
+<table>
+  <thead><tr><th>Field</th><th>Status</th><th>Type</th><th>Description</th></tr></thead>
+  <tbody>
+    <tr><td><code>message</code></td><td><span class="badge badge-required">required</span></td><td><span class="badge badge-type">string</span></td><td>The message displayed to the user. Supports interpolation — show previous stage outputs here.</td></tr>
+    <tr><td><code>placeholder</code></td><td><span class="badge badge-optional">optional</span></td><td><span class="badge badge-type">string</span></td><td>Hint text shown next to the input cursor.</td></tr>
+    <tr><td><code>next</code></td><td><span class="badge badge-optional">optional</span></td><td><span class="badge badge-type">NextCondition[]</span></td><td>Route based on what the user typed.</td></tr>
+  </tbody>
+</table>
+</div>
+
+<div class="code-block">
+  <div class="code-header"><span class="code-label">yaml</span><button class="copy-btn">Copy</button></div>
+  <pre><code class="language-yaml">- id: approve_plan
+  type: input
+  message: |
+    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    IMPLEMENTATION PLAN
+    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+    {{input}}
+
+    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    Type "yes" to proceed, or describe changes:
+  placeholder: "yes  /  skip step 3, add error handling..."
+  next:
+    - condition: "['yes','y','ok','lgtm'].includes(output.toLowerCase().trim())"
+      stage: implement
+    - stage: revise_plan</code></pre>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════════════
+     STAGE: LOOP
+═══════════════════════════════════════════════════════════════════════════ -->
+<h2 id="stage-loop">Stage: <code>loop</code></h2>
+
+<p>Runs a sub-pipeline repeatedly until a condition is met or the user approves. Sub-stages share the parent context — outputs are written to <code>ctx.stages</code> and persist across iterations.</p>
+
+<div class="table-wrap">
+<table>
+  <thead><tr><th>Field</th><th>Status</th><th>Type</th><th>Description</th></tr></thead>
+  <tbody>
+    <tr><td><code>stages</code></td><td><span class="badge badge-required">required</span></td><td><span class="badge badge-type">Stage[]</span></td><td>Sub-stages to run each iteration. Can include any stage type, including nested loops.</td></tr>
+    <tr><td><code>until</code></td><td><span class="badge badge-required">required</span></td><td><span class="badge badge-type">JS expression</span></td><td>Exit condition. Evaluated after each iteration with <code>output</code> (last sub-stage output) and <code>stages</code> in scope. Use <code>"false"</code> for approval-only loops.</td></tr>
+    <tr><td><code>max_iterations</code></td><td><span class="badge badge-optional">optional</span></td><td><span class="badge badge-type">integer</span></td><td>Maximum iterations before stopping. Default: <code>10</code>.</td></tr>
+    <tr><td><code>approve</code></td><td><span class="badge badge-optional">optional</span></td><td><span class="badge badge-type">boolean</span></td><td>If <code>true</code>, pause after each iteration for human review.</td></tr>
+    <tr><td><code>approve_message</code></td><td><span class="badge badge-optional">optional</span></td><td><span class="badge badge-type">string</span></td><td>What to display during the approval prompt. Supports interpolation. Defaults to the last sub-stage output.</td></tr>
+    <tr><td><code>next</code></td><td><span class="badge badge-optional">optional</span></td><td><span class="badge badge-type">NextCondition[]</span></td><td>Conditional routing after the loop completes.</td></tr>
+  </tbody>
+</table>
+</div>
+
+<h3>Approval responses</h3>
+
+<p>When <code>approve: true</code>, the user sees the <code>approve_message</code> and a prompt with three options:</p>
+
+<div class="table-wrap">
+<table>
+  <thead><tr><th>Input</th><th>Effect</th></tr></thead>
+  <tbody>
+    <tr><td><code>done</code>, <code>ship</code>, <code>yes</code>, <code>y</code>, <code>ok</code>, <code>approve</code>, <code>lgtm</code></td><td>Accept — exit the loop, continue the workflow.</td></tr>
+    <tr><td><code>stop</code>, <code>quit</code>, <code>abort</code>, <code>exit</code>, <code>cancel</code>, <code>no</code></td><td>Abort — exit the loop immediately, no further iterations.</td></tr>
+    <tr><td><em>any other text</em></td><td>Feedback — stored in <code>{{vars.loop_feedback}}</code> and used as input for the next iteration's sub-stages.</td></tr>
+  </tbody>
+</table>
+</div>
+
+<h3>Example: Fix loop until tests pass</h3>
+
+<div class="code-block">
+  <div class="code-header"><span class="code-label">yaml</span><button class="copy-btn">Copy</button></div>
+  <pre><code class="language-yaml">- id: fix_loop
+  type: loop
+  max_iterations: 6
+  until: "!stages.run_tests.output.toLowerCase().includes('fail')"
+  stages:
+    - id: analyze
+      type: llm
+      provider: anthropic
+      model: claude-sonnet-4-6
+      files:
+        - src/**/*.ts
+        - tests/**/*.ts
+      prompt: |
+        Failing tests:
+        {{stages.run_tests.output}}
+
+        Fix the source files. Output as === FILE: path === blocks.
+      max_tokens: 4096
+
+    - id: apply
+      type: shell
+      command: node scripts/apply-blocks.js
+
+    - id: run_tests
+      type: shell
+      command: npm test 2>&1 || true</code></pre>
+</div>
+
+<h3>Example: Iterative development with approval</h3>
+
+<div class="code-block">
+  <div class="code-header"><span class="code-label">yaml</span><button class="copy-btn">Copy</button></div>
+  <pre><code class="language-yaml">- id: dev_loop
+  type: loop
+  max_iterations: 5
+  approve: true
+  approve_message: |
+    ── Iteration {{vars.loop_iteration}} ────────────────────────────
+
+    TYPECHECK:  {{stages.typecheck.output}}
+    TESTS:      {{stages.run_tests.output}}
+  until: "false"   # driven entirely by human approval
+  stages:
+    - id: implement
+      type: llm
+      provider: anthropic
+      model: claude-sonnet-4-6
+      prompt: |
+        Plan: {{stages.create_plan.output}}
+        Feedback: {{vars.loop_feedback}}
+        Typecheck errors: {{stages.typecheck.output}}
+      max_tokens: 8000
+
+    - id: typecheck
+      type: shell
+      command: npx tsc --noEmit 2>&1 || true
+
+    - id: run_tests
+      type: shell
+      command: npm test 2>&1 || true</code></pre>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════════════
+     CLI REFERENCE
+═══════════════════════════════════════════════════════════════════════════ -->
+<h2 id="cli-run">CLI: <code>aiac run</code></h2>
+
+<div class="code-block">
+  <div class="code-header"><span class="code-label">bash</span><button class="copy-btn">Copy</button></div>
+  <pre><code class="language-bash">aiac run &lt;workflow.yaml&gt; [options]</code></pre>
+</div>
+
+<div class="table-wrap">
+<table>
+  <thead><tr><th>Flag</th><th>Description</th></tr></thead>
+  <tbody>
+    <tr><td><code>-p, --prompt &lt;text&gt;</code></td><td>Initial prompt text passed as <code>{{input}}</code> to the first stage.</td></tr>
+    <tr><td><code>--prompt-file &lt;path&gt;</code></td><td>Read the initial prompt from a file.</td></tr>
+    <tr><td><code>--var &lt;KEY=value&gt;</code></td><td>Set an extra variable accessible as <code>{{vars.KEY}}</code>. Repeatable.</td></tr>
+    <tr><td><code>--dry-run</code></td><td>Print all stages without executing any API calls or shell commands.</td></tr>
+    <tr><td><code>--output &lt;path&gt;</code></td><td>Write the final stage output to a file.</td></tr>
+    <tr><td><code>--env-file &lt;path&gt;</code></td><td>Load environment variables from a <code>.env</code> file. Defaults to <code>.env</code> in CWD.</td></tr>
+    <tr><td><code>--resume</code></td><td>Silently resume from an existing checkpoint without prompting.</td></tr>
+    <tr><td><code>--fresh</code></td><td>Ignore any existing checkpoint and start from scratch.</td></tr>
+  </tbody>
+</table>
+</div>
+
+<h2 id="cli-validate">CLI: <code>aiac validate</code></h2>
+
+<p>Validates the workflow YAML schema and resolves all template imports without executing anything.</p>
+
+<div class="code-block">
+  <div class="code-header"><span class="code-label">bash</span><button class="copy-btn">Copy</button></div>
+  <pre><code class="language-bash">aiac validate workflow.yaml
+# ✓ "My Workflow" is valid
+#   8 stage(s): analyze, approve_plan, create_plan, ...
+#   imports: ./templates/personas.yaml (10 template(s) loaded)</code></pre>
+</div>
+
+<h2 id="cli-init">CLI: <code>aiac init</code></h2>
+
+<p>Scaffolds a new workflow YAML file with placeholder stages and comments.</p>
+
+<div class="code-block">
+  <div class="code-header"><span class="code-label">bash</span><button class="copy-btn">Copy</button></div>
+  <pre><code class="language-bash">aiac init my-workflow
+# Created my-workflow.yaml
+# Run with: aiac run my-workflow.yaml --prompt "your input"</code></pre>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════════════
+     PATTERNS
+═══════════════════════════════════════════════════════════════════════════ -->
+<h2 id="pattern-plan-approve">Pattern: Plan → Approve → Build</h2>
+
+<p>The most common agentic pattern. An expensive model produces a plan, a human reviews and optionally refines it, then a cheaper or more specialized model executes it.</p>
+
+<div class="flow">
+  <div class="flow-step">Opus: analyze</div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-step accent">human: approve</div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-step">Opus: plan</div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-step accent">human: approve</div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-step">Sonnet: implement</div>
+</div>
+
+<div class="code-block">
+  <div class="code-header"><span class="code-label">yaml — two-phase approval</span><button class="copy-btn">Copy</button></div>
+  <pre><code class="language-yaml">stages:
+  - id: analyze
+    type: llm
+    provider: anthropic
+    model: claude-opus-4-7
+    files: [src/**/*.ts, package.json]
+    prompt: "Feature: {{input}}\nAnalyze the codebase and define acceptance criteria."
+
+  - id: approve_analysis
+    type: input
+    message: "{{input}}\n\nType 'yes' to proceed or give feedback:"
+    next:
+      - condition: "output.toLowerCase().trim() === 'yes'"
+        stage: create_plan
+      - stage: refine_analysis
+
+  - id: refine_analysis
+    type: llm
+    provider: anthropic
+    model: claude-opus-4-7
+    prompt: |
+      Original: {{stages.analyze.output}}
+      Feedback: {{input}}
+      Revise accordingly.
+
+  - id: create_plan
+    # ... implementation follows</code></pre>
+</div>
+
+<!-- ─────────────────────────────────────────────────────────────────────── -->
+<h2 id="pattern-fix-loop">Pattern: Autonomous Fix Loop</h2>
+
+<p>Run tests, analyze failures, apply fixes, repeat until green — no human in the loop. Set a sane <code>max_iterations</code> to cap spend.</p>
+
+<div class="flow">
+  <div class="flow-step">run tests</div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-step">check: passing?</div>
+  <div class="flow-arrow">→ no →</div>
+  <div class="flow-step">LLM: fix</div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-step">apply</div>
+  <div class="flow-arrow">→ loop</div>
+</div>
+
+<div class="code-block">
+  <div class="code-header"><span class="code-label">yaml</span><button class="copy-btn">Copy</button></div>
+  <pre><code class="language-yaml">stages:
+  - id: initial_run
+    type: shell
+    command: npm test 2>&1 || true
+
+  - id: gate
+    type: llm
+    provider: anthropic
+    model: claude-haiku-4-5-20251001
+    system: "Reply with one word: passing or failing"
+    prompt: "{{input}}"
+    max_tokens: 5
+    next:
+      - condition: "output.includes('passing')"
+        stage: done
+      - stage: fix_loop
+
+  - id: fix_loop
+    type: loop
+    max_iterations: 6
+    until: "!stages.run_tests.output.toLowerCase().includes('fail')"
+    stages:
+      - id: fix
+        type: llm
+        provider: anthropic
+        model: claude-sonnet-4-6
+        files: [src/**/*.ts, tests/**/*.ts]
+        prompt: "Fix these failures:\n{{stages.run_tests.output}}"
+        max_tokens: 4096
+      - id: apply
+        type: shell
+        command: node scripts/apply-blocks.js
+      - id: run_tests
+        type: shell
+        command: npm test 2>&1 || true
+
+  - id: done
+    type: llm
+    provider: anthropic
+    model: claude-haiku-4-5-20251001
+    prompt: "Summarize test results: {{stages.run_tests.output}}"</code></pre>
+</div>
+
+<!-- ─────────────────────────────────────────────────────────────────────── -->
+<h2 id="pattern-multi-provider">Pattern: Multi-Provider Pipeline</h2>
+
+<p>Use the best model for each task. Expensive models for reasoning, cheap models for classification and formatting, specialized models for code.</p>
+
+<div class="code-block">
+  <div class="code-header"><span class="code-label">yaml — analyze (Opus) → suggest (GPT-4o) → classify (Haiku)</span><button class="copy-btn">Copy</button></div>
+  <pre><code class="language-yaml">stages:
+  - id: analyze
+    type: llm
+    provider: anthropic
+    model: claude-opus-4-7       # deep reasoning
+    prompt: "Analyze: {{input}}"
+
+  - id: suggest
+    type: llm
+    provider: openai
+    model: gpt-4o               # strong code generation
+    prompt: "Suggest fixes for:\n{{input}}"
+
+  - id: classify
+    type: llm
+    provider: anthropic
+    model: claude-haiku-4-5-20251001   # fast, cheap triage
+    system: "Reply with one word: critical, warning, or ok"
+    prompt: "{{stages.analyze.output}}"
+    max_tokens: 10
+    next:
+      - condition: "output.includes('critical')"
+        stage: alert</code></pre>
+</div>
+
+<!-- ─────────────────────────────────────────────────────────────────────── -->
+<h2 id="pattern-human-gate">Pattern: Human Approval Gate</h2>
+
+<p>Insert an <code>input</code> stage anywhere in the pipeline to get human sign-off before a destructive or expensive operation.</p>
+
+<div class="code-block">
+  <div class="code-header"><span class="code-label">yaml</span><button class="copy-btn">Copy</button></div>
+  <pre><code class="language-yaml">- id: propose_fix
+  type: llm
+  provider: openai
+  model: gpt-4o
+  prompt: "Write a fix for: {{stages.triage.output}}"
+
+- id: approve_fix
+  type: input
+  message: |
+    PROPOSED FIX:
+    {{input}}
+
+    Type "apply" to proceed, "skip" to close, or describe an alternative:
+  next:
+    - condition: "output.toLowerCase().startsWith('apply')"
+      stage: apply_fix
+    - condition: "output.toLowerCase().startsWith('skip')"
+      stage: close
+    - stage: revise_fix          # any other text → revise with feedback</code></pre>
+</div>
+
+<!-- ─────────────────────────────────────────────────────────────────────── -->
+<h2 id="pattern-claude-code">Pattern: Delegate to Claude Code</h2>
+
+<p>Use aiac for planning and approval, then hand off implementation to Claude Code's interactive session. Claude Code has full filesystem and shell access — it can browse the codebase, run commands, and iterate autonomously.</p>
+
+<div class="flow">
+  <div class="flow-step">Opus: plan</div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-step accent">human: approve</div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-step">shell: claude (interactive)</div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-step">typecheck + tests</div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-step">Haiku: PR desc</div>
+</div>
+
+<div class="code-block">
+  <div class="code-header"><span class="code-label">yaml</span><button class="copy-btn">Copy</button></div>
+  <pre><code class="language-yaml">- id: save_plan
+  type: file
+  action: write
+  path: /tmp/aiac_plan.txt
+  content: "{{stages.analyze.output}}"
+  next:
+    - stage: implement
+
+- id: implement
+  type: shell
+  interactive: true
+  # Opens Claude Code with the plan. Type /exit when done.
+  # Add --dangerously-skip-permissions to auto-approve all file/shell actions.
+  command: claude --model sonnet "$(cat /tmp/aiac_plan.txt)"</code></pre>
+</div>
+
+<div class="callout callout-tip">
+  <div class="callout-icon">💡</div>
+  <div class="callout-content"><strong>Run from your project root.</strong> The shell stage inherits aiac's CWD, so Claude Code automatically operates on your project directory.</div>
+</div>
+
+<!-- ─────────────────────────────────────────────────────────────────────── -->
+<h2 id="pattern-codex">Pattern: Delegate to Codex</h2>
+
+<p>Same aiac orchestration pattern — Opus plans, you approve — but implementation is handed off to <strong>OpenAI Codex CLI</strong>. Codex opens its interactive TUI with the plan as the first message. When you exit, the workflow resumes with typecheck, tests, and PR description.</p>
+
+<div class="flow">
+  <div class="flow-step">Opus: plan</div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-step accent">human: approve</div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-step">shell: codex (interactive)</div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-step">typecheck + tests</div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-step">Haiku: PR desc</div>
+</div>
+
+<div class="code-block">
+  <div class="code-header"><span class="code-label">workflows/dev/delegate-to-codex.yaml — implement stage</span><button class="copy-btn">Copy</button></div>
+  <pre><code class="language-yaml">- id: implement
+  type: shell
+  interactive: true
+  # Interactive TUI — Codex prompts for approval on each action.
+  # Press Q or Ctrl+C when done to return to the workflow.
+  command: codex "$(cat /tmp/aiac_codex_plan.txt)"
+
+  # ── Autonomous alternatives ──────────────────────────────────────────────
+  # Safe: can write files in workspace, asks before shell commands
+  # command: codex exec --sandbox workspace-write --model o3 "$(cat /tmp/aiac_codex_plan.txt)"
+  #
+  # Full auto: bypass all approvals and sandbox restrictions
+  # command: codex exec --dangerously-bypass-approvals-and-sandbox --model o3 "$(cat /tmp/aiac_codex_plan.txt)"</code></pre>
+</div>
+
+<h3>Claude Code vs Codex — quick comparison</h3>
+
+<div class="table-wrap">
+<table>
+  <thead><tr><th></th><th>Claude Code</th><th>Codex</th></tr></thead>
+  <tbody>
+    <tr><td><strong>Interactive command</strong></td><td><code>claude --model sonnet "$(cat plan.txt)"</code></td><td><code>codex "$(cat plan.txt)"</code></td></tr>
+    <tr><td><strong>Non-interactive command</strong></td><td><code>claude --print --dangerously-skip-permissions</code></td><td><code>codex exec --sandbox workspace-write</code></td></tr>
+    <tr><td><strong>Full bypass</strong></td><td><code>--dangerously-skip-permissions</code></td><td><code>--dangerously-bypass-approvals-and-sandbox</code></td></tr>
+    <tr><td><strong>Model flag</strong></td><td><code>--model sonnet</code> / <code>--model opus</code></td><td><code>--model o3</code> / <code>--model o4-mini</code></td></tr>
+    <tr><td><strong>Required env var</strong></td><td><code>ANTHROPIC_API_KEY</code></td><td><code>OPENAI_API_KEY</code></td></tr>
+    <tr><td><strong>Workflow file</strong></td><td><code>delegate-to-claude-code.yaml</code></td><td><code>delegate-to-codex.yaml</code></td></tr>
+  </tbody>
+</table>
+</div>
+
+<div class="callout callout-info">
+  <div class="callout-icon">ℹ️</div>
+  <div class="callout-content"><strong>Both workflows use the same aiac plan stages.</strong> The only difference is the <code>implement</code> shell stage and its temp file path (<code>/tmp/aiac_cc_plan.txt</code> vs <code>/tmp/aiac_codex_plan.txt</code>), so they can run in parallel without conflict.</div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════════════
+     GITHUB ACTIONS
+═══════════════════════════════════════════════════════════════════════════ -->
+<h2 id="gh-overview">GitHub Actions Integration</h2>
+
+<p>aiac workflows run cleanly in CI — as long as you use no <code>input</code> stages or <code>approve: true</code> loops (those require a TTY). The pattern: the Action writes the PR diff to a temp file, runs aiac headlessly, and posts the compiled review as a PR comment.</p>
+
+<div class="flow">
+  <div class="flow-step">PR opened / pushed</div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-step">git diff → /tmp/pr_diff.txt</div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-step accent">aiac run pr-review.yaml</div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-step">gh pr comment</div>
+</div>
+
+<p>Two posting approaches — pick one:</p>
+
+<div class="table-wrap">
+<table>
+  <thead><tr><th></th><th>Option A — workflow posts</th><th>Option B — action posts</th></tr></thead>
+  <tbody>
+    <tr><td><strong>How</strong></td><td>Final stage in the aiac workflow runs <code>gh pr comment</code></td><td>aiac writes report to file; Action YAML posts it</td></tr>
+    <tr><td><strong>Best for</strong></td><td>Keeping all logic inside the workflow YAML</td><td>More control — deduplication, sticky comments, custom formatting</td></tr>
+    <tr><td><strong>GITHUB_TOKEN</strong></td><td>Passed as env var to aiac process</td><td>Used directly in the Action step</td></tr>
+    <tr><td><strong>Template file</strong></td><td><code>pr-review-option-a.yml</code></td><td><code>pr-review-option-b.yml</code></td></tr>
+  </tbody>
+</table>
+</div>
+
+<h2 id="gh-workflow">The PR Review Workflow</h2>
+
+<p><strong>File:</strong> <code>workflows/ci/pr-review.yaml</code></p>
+
+<p>The workflow is CI-safe (no human gates). It reads the diff from <code>/tmp/pr_diff.txt</code> — written by the Action before aiac runs — then fans out to three LLM reviewers and compiles everything into a single GitHub comment.</p>
+
+<div class="flow">
+  <div class="flow-step">load_diff</div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-step">review_quality</div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-step">review_security</div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-step">review_tests</div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-step">compile_report</div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-step">save_report</div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-step accent">post_comment</div>
+</div>
+
+<div class="table-wrap">
+<table>
+  <thead><tr><th>Stage</th><th>Type</th><th>What it does</th></tr></thead>
+  <tbody>
+    <tr><td><code>load_diff</code></td><td>file: read</td><td>Reads <code>/tmp/pr_diff.txt</code> into context. All later stages reference it via <code>{{stages.load_diff.output}}</code>.</td></tr>
+    <tr><td><code>review_quality</code></td><td>llm · Sonnet</td><td>Bugs, logic errors, missing error handling, code smells. Output: markdown bullet list per file.</td></tr>
+    <tr><td><code>review_security</code></td><td>llm · Sonnet</td><td>Injection, auth bypasses, hardcoded secrets, unsafe input. Severity-prefixed: 🔴/🟡/🔵.</td></tr>
+    <tr><td><code>review_tests</code></td><td>llm · Haiku</td><td>Untested branches, missing edge cases, tests that need updating.</td></tr>
+    <tr><td><code>compile_report</code></td><td>llm · Haiku</td><td>Formats all three reviews into one GitHub-flavored markdown comment.</td></tr>
+    <tr><td><code>save_report</code></td><td>file: write</td><td>Writes compiled report to <code>/tmp/aiac_pr_review.md</code>.</td></tr>
+    <tr><td><code>post_comment</code></td><td>shell</td><td>Runs <code>gh pr comment {{env.PR_NUMBER}} --body-file /tmp/aiac_pr_review.md</code>. Option A only — remove for Option B.</td></tr>
+  </tbody>
+</table>
+</div>
+
+<p>The comment posted on the PR looks like this:</p>
+
+<div class="code-block">
+  <div class="code-header"><span class="code-label">PR comment output</span><button class="copy-btn">Copy</button></div>
+  <pre><code class="language-bash">## 🤖 AI Code Review
+
+### 🐛 Code Quality & Bugs
+- `src/auth.ts`: Missing null check before `user.id` access on line 42
+- `src/api/users.ts`: Unhandled promise rejection in `deleteUser()`
+
+### 🔒 Security
+- 🔴 `src/db.ts`: Raw SQL string concatenation — use parameterized queries
+- 🔵 `src/config.ts`: `API_KEY` logged at debug level
+
+### 🧪 Test Coverage
+- `src/auth.ts`: `refreshToken()` has no test for expired token path
+- ✅ New utility functions have corresponding tests
+
+---
+Reviewed by aiac · `claude-sonnet-4-6`</code></pre>
+</div>
+
+<h2 id="gh-option-a">Option A — Workflow Posts the Comment</h2>
+
+<p>The aiac workflow itself has a final <code>post_comment</code> shell stage. The Action just runs aiac and provides <code>GITHUB_TOKEN</code> + <code>PR_NUMBER</code> as env vars.</p>
+
+<div class="code-block">
+  <div class="code-header"><span class="code-label">.github/workflows/pr-review.yml — Option A</span><button class="copy-btn">Copy</button></div>
+  <pre><code class="language-yaml">name: PR Code Review
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install aiac
+        run: |
+          git clone https://github.com/your-org/aiac.git /tmp/aiac
+          cd /tmp/aiac && npm ci && npm run build && npm link
+
+      - name: Generate PR diff
+        run: |
+          git diff origin/${{ github.base_ref }}...HEAD \
+            -- '*.ts' '*.tsx' '*.js' '*.jsx' '*.py' '*.go' \
+            | head -c 60000 \
+            > /tmp/pr_diff.txt
+
+      - name: Run aiac PR review
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          aiac run workflows/ci/pr-review.yaml \
+            --prompt "PR #$PR_NUMBER" \
+            --fresh</code></pre>
+</div>
+
+<h2 id="gh-option-b">Option B — Action Posts the Comment</h2>
+
+<p>Remove the <code>post_comment</code> stage from the workflow. aiac writes the report to <code>/tmp/aiac_pr_review.md</code> via <code>save_report</code>; the Action posts it. Use this when you want deduplication (e.g. <a href="https://github.com/marocchino/sticky-pull-request-comment">sticky-pull-request-comment</a>) or custom formatting.</p>
+
+<div class="code-block">
+  <div class="code-header"><span class="code-label">.github/workflows/pr-review.yml — Option B</span><button class="copy-btn">Copy</button></div>
+  <pre><code class="language-yaml">      # ... same checkout / setup / diff steps as Option A ...
+
+      - name: Run aiac PR review
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          aiac run workflows/ci/pr-review.yaml \
+            --prompt "PR #${{ github.event.pull_request.number }}" \
+            --fresh
+
+      - name: Post PR comment
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh pr comment ${{ github.event.pull_request.number }} \
+            --body-file /tmp/aiac_pr_review.md \
+            --repo ${{ github.repository }}
+
+      # To update existing comment instead of creating a new one on each push:
+      # - uses: marocchino/sticky-pull-request-comment@v2
+      #   with:
+      #     path: /tmp/aiac_pr_review.md</code></pre>
+</div>
+
+<h2 id="gh-tips">Tips &amp; Gotchas</h2>
+
+<h3>CI-safe workflows</h3>
+<p>Workflows running in GitHub Actions must not contain <code>input</code> stages or <code>loop</code> stages with <code>approve: true</code> — both require a TTY. Create separate <code>workflows/ci/</code> variants for automation and keep the interactive versions in <code>workflows/dev/</code>.</p>
+
+<h3>Diff size limits</h3>
+<p>Large PRs can exceed model context limits. The Action examples cap the diff at 60 KB with <code>head -c 60000</code>. For very large PRs, filter to specific file types or split into multiple aiac runs per directory.</p>
+
+<div class="code-block">
+  <div class="code-header"><span class="code-label">bash — limit diff by path or size</span><button class="copy-btn">Copy</button></div>
+  <pre><code class="language-bash"># Only TypeScript files, max 60 KB
+git diff origin/$BASE...HEAD -- '*.ts' '*.tsx' | head -c 60000 > /tmp/pr_diff.txt
+
+# Exclude generated files and lock files
+git diff origin/$BASE...HEAD \
+  -- ':(exclude)*.lock' ':(exclude)dist/**' ':(exclude)*.min.js' \
+  | head -c 60000 > /tmp/pr_diff.txt</code></pre>
+</div>
+
+<h3>Required GitHub secrets</h3>
+<div class="table-wrap">
+<table>
+  <thead><tr><th>Secret</th><th>Where to add</th><th>Notes</th></tr></thead>
+  <tbody>
+    <tr><td><code>ANTHROPIC_API_KEY</code></td><td>Repo → Settings → Secrets → Actions</td><td>Required for all LLM stages.</td></tr>
+    <tr><td><code>GITHUB_TOKEN</code></td><td>Auto-provided by GitHub Actions</td><td>No setup needed. Grant <code>pull-requests: write</code> permission in the job.</td></tr>
+  </tbody>
+</table>
+</div>
+
+<h3>Using <code>--fresh</code> in CI</h3>
+<p>Always pass <code>--fresh</code> in CI runs. Without it, aiac will look for a checkpoint from a previous run and prompt interactively — which hangs the job.</p>
+
+<h3>Avoid duplicate comments on re-runs</h3>
+<p>By default, each push creates a new comment. Use <a href="https://github.com/marocchino/sticky-pull-request-comment">sticky-pull-request-comment</a> (Option B) or add a <code>shell</code> stage that first deletes any existing bot comment before posting.</p>
+
+<!-- ═══════════════════════════════════════════════════════════════════════════
+     USE CASES
+═══════════════════════════════════════════════════════════════════════════ -->
+<h2 id="uc-code-review">Use Case: Code Review Pipeline</h2>
+
+<p>Multi-model review — Sonnet analyzes, GPT-4o suggests fixes, Haiku rates severity, results saved to a timestamped report.</p>
+
+<div class="code-block">
+  <div class="code-header"><span class="code-label">examples/code-review.yaml</span><button class="copy-btn">Copy</button></div>
+  <pre><code class="language-yaml">name: Code Review Pipeline
+stages:
+  - id: analyze
+    type: llm
+    provider: anthropic
+    model: claude-sonnet-4-6
+    system: You are an expert code reviewer. Identify bugs, security issues, and quality problems.
+    prompt: |
+      Review this code:
+      {{input}}
+    max_tokens: 2048
+
+  - id: suggest
+    type: llm
+    provider: openai
+    model: gpt-4o
+    prompt: "Suggest specific, actionable fixes for:\n{{input}}"
+    max_tokens: 2048
+
+  - id: save_review
+    type: file
+    action: write
+    path: ./reviews/review-{{timestamp}}.md
+    content: |
+      ## Analysis
+      {{stages.analyze.output}}
+
+      ## Suggested Fixes
+      {{stages.suggest.output}}
+
+  - id: rate_severity
+    type: llm
+    provider: anthropic
+    model: claude-haiku-4-5-20251001
+    system: "Reply with exactly one word: critical, warning, or ok"
+    prompt: "{{stages.analyze.output}}"
+    max_tokens: 10</code></pre>
+</div>
+
+<div class="code-block">
+  <div class="code-header"><span class="code-label">bash</span><button class="copy-btn">Copy</button></div>
+  <pre><code class="language-bash">cat src/auth.ts | aiac run examples/code-review.yaml --prompt "$(cat src/auth.ts)"</code></pre>
+</div>
+
+<!-- ─────────────────────────────────────────────────────────────────────── -->
+<h2 id="uc-feature-dev">Use Case: Feature Development</h2>
+
+<p>Full AI-driven feature implementation: read the codebase, design a plan, loop through implement → apply → test, pause for human review after each iteration.</p>
+
+<div class="code-block">
+  <div class="code-header"><span class="code-label">bash</span><button class="copy-btn">Copy</button></div>
+  <pre><code class="language-bash">cd /my/project
+aiac run examples/develop-feature.yaml \
+  --prompt "Add rate limiting to the /api/users endpoint"</code></pre>
+</div>
+
+<p>The <code>develop-feature.yaml</code> workflow:</p>
+<ol>
+  <li>Opus reads <code>src/**/*.ts</code> and writes an implementation plan</li>
+  <li>A loop runs up to 5 iterations: GPT-4o implements → apply → typecheck → test</li>
+  <li>After each iteration you see the output and can type feedback or <code>done</code></li>
+  <li>Haiku writes a 5-bullet summary when you exit the loop</li>
+</ol>
+
+<!-- ─────────────────────────────────────────────────────────────────────── -->
+<h2 id="uc-incident">Use Case: Incident Response</h2>
+
+<p>Paste an error or alert. The workflow triages severity, branches on critical vs. non-critical, proposes and applies a fix with human approval, writes a postmortem, and notifies Slack.</p>
+
+<div class="code-block">
+  <div class="code-header"><span class="code-label">bash</span><button class="copy-btn">Copy</button></div>
+  <pre><code class="language-bash">aiac run examples/incident-response.yaml \
+  --prompt "OOMKilled on api-server pod, 3 restarts in 10min, p95 latency spiked to 8s"</code></pre>
+</div>
+
+<p>Key patterns used:</p>
+<ul>
+  <li><strong>Conditional routing</strong> — Haiku classifies severity, critical path goes directly to escalation + Slack.</li>
+  <li><strong>Human approval gate</strong> — engineer reviews triage + proposed fix before applying.</li>
+  <li><strong>HTTP stage</strong> — Slack webhook notification using <code>{{env.SLACK_WEBHOOK_URL}}</code>.</li>
+  <li><strong>File stage</strong> — incident log and postmortem saved with <code>{{timestamp}}</code> filenames.</li>
+</ul>
+
+<!-- ─────────────────────────────────────────────────────────────────────── -->
+<h2 id="uc-content">Use Case: Content Pipeline</h2>
+
+<p>Research a topic, draft an article, critique it, rewrite based on the critique, then publish via API.</p>
+
+<div class="code-block">
+  <div class="code-header"><span class="code-label">yaml — sketch</span><button class="copy-btn">Copy</button></div>
+  <pre><code class="language-yaml">stages:
+  - id: research
+    type: llm
+    provider: anthropic
+    model: claude-opus-4-7
+    prompt: "Research and outline an article about: {{input}}"
+
+  - id: draft
+    type: llm
+    provider: openai
+    model: gpt-4o
+    prompt: "Write a 600-word article based on:\n{{input}}"
+
+  - id: critique
+    type: llm
+    provider: anthropic
+    model: claude-sonnet-4-6
+    prompt: "Critique this draft for clarity, accuracy, and engagement:\n{{input}}"
+
+  - id: rewrite
+    type: llm
+    provider: openai
+    model: gpt-4o
+    prompt: |
+      Original draft:
+      {{stages.draft.output}}
+
+      Critique:
+      {{stages.critique.output}}
+
+      Rewrite incorporating the feedback.
+
+  - id: publish
+    type: http
+    method: POST
+    url: "{{env.CMS_API_URL}}/articles"
+    headers:
+      Authorization: "Bearer {{env.CMS_TOKEN}}"
+      Content-Type: application/json
+    body:
+      title: "{{input}}"
+      body: "{{stages.rewrite.output}}"
+      status: draft</code></pre>
+</div>
+
+</div><!-- /content -->
+</div><!-- /main -->
+
+<script>
+  hljs.highlightAll();
+
+  // Copy buttons
+  document.querySelectorAll('.copy-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const code = btn.closest('.code-block').querySelector('code').innerText;
+      navigator.clipboard.writeText(code).then(() => {
+        btn.textContent = 'Copied!';
+        btn.classList.add('copied');
+        setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 1800);
+      });
+    });
+  });
+
+  // Active nav tracking
+  const sections = document.querySelectorAll('section[id], h2[id], h3[id]');
+  const navLinks = document.querySelectorAll('.nav-section a');
+
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        navLinks.forEach(link => link.classList.remove('active'));
+        const active = document.querySelector(`.nav-section a[href="#${entry.target.id}"]`);
+        if (active) active.classList.add('active');
+      }
+    });
+  }, { rootMargin: '-20% 0px -70% 0px' });
+
+  sections.forEach(s => observer.observe(s));
+</script>
+</body>
+</html>

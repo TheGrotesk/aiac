@@ -1,0 +1,108 @@
+name: Develop Feature
+description: |
+  Reads the existing codebase, designs a minimal implementation plan,
+  then iterates: implement → apply → test — pausing for your review after each round.
+  Type "done" when happy, or give feedback to drive the next iteration.
+version: "1.0"
+
+templates:
+  senior_engineer: |
+    You are a senior software engineer. You write minimal, targeted, production-ready code.
+    No padding — only what is needed.
+  file_output_format: |
+    Output ONLY file content using this format — no prose, no explanations:
+    === FILE: path/to/file.ts ===
+    [complete file content]
+
+stages:
+  - id: design
+    type: llm
+    provider: anthropic
+    model: claude-opus-4-7
+    system: "{{templates.senior_engineer}}"
+    files:
+      - src/**/*.ts
+      - package.json
+    prompt: |
+      Feature request: {{input}}
+
+      Review the codebase above and write a focused implementation plan:
+      1. Files to create (path + one-line purpose)
+      2. Files to modify (path + what changes)
+      3. New dependencies if any
+      4. Any data model or API changes
+      5. Estimated complexity: low / medium / high
+    max_tokens: 1500
+
+  - id: dev_loop
+    type: loop
+    max_iterations: 5
+    approve: true
+    approve_message: |
+      ── Iteration {{vars.loop_iteration}} complete ──────────────────────────────
+
+      IMPLEMENTATION OUTPUT:
+      {{stages.implement.output}}
+
+      ──────────────────────────────────────────────────────────────────────────
+      Previous feedback applied: {{vars.loop_feedback}}
+    until: "false"  # always driven by human approval — type "done" when satisfied
+    stages:
+      - id: implement
+        type: llm
+        provider: openai
+        model: gpt-4o
+        system: "{{templates.senior_engineer}}\n{{templates.file_output_format}}"
+        files:
+          - src/**/*.ts
+        prompt: |
+          Implementation plan:
+          {{stages.design.output}}
+
+          Feature: {{vars.original_input}}
+
+          Feedback from last review (if any): {{vars.loop_feedback}}
+
+          Write the complete implementation. Every file must be complete — no stubs.
+        max_tokens: 4096
+
+      - id: apply_changes
+        type: shell
+        command: |
+          node -e "
+            const fs = require('fs'), path = require('path');
+            const text = process.env.IMPL_OUTPUT;
+            const parts = text.split(/^=== FILE: (.+?) ===/m);
+            let applied = 0;
+            for (let i = 1; i < parts.length; i += 2) {
+              const filePath = parts[i].trim();
+              const content = (parts[i + 1] || '').replace(/^\n/, '').replace(/={3,}END FILE={3,}\s*$/, '');
+              fs.mkdirSync(path.dirname(filePath), { recursive: true });
+              fs.writeFileSync(filePath, content, 'utf-8');
+              console.log('wrote:', filePath);
+              applied++;
+            }
+            console.log(applied + ' file(s) applied.');
+          "
+        # Pass LLM output via env to avoid shell-escaping issues with backticks/quotes
+
+      - id: type_check
+        type: shell
+        command: npx tsc --noEmit 2>&1 || true
+
+      - id: run_tests
+        type: shell
+        command: npm test 2>&1 || true
+
+  - id: summary
+    type: llm
+    provider: anthropic
+    model: claude-haiku-4-5-20251001
+    prompt: |
+      Feature implemented: {{vars.original_input}}
+      Plan: {{stages.design.output}}
+      Final test results: {{stages.run_tests.output}}
+
+      Write a 5-bullet implementation summary: what was built, files changed,
+      test status, and immediate next steps.
+    max_tokens: 400

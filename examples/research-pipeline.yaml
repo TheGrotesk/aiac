@@ -1,0 +1,71 @@
+name: Research Pipeline
+description: Gather facts, synthesize a structured report, write an executive summary, and save to file
+version: "1.0"
+
+stages:
+  - id: gather
+    type: llm
+    provider: gemini
+    model: gemini-2.0-flash
+    system: |
+      You are a research assistant. Gather comprehensive, factual information on the given topic.
+      Organize your findings into clear categories: Background, Key Facts, Recent Developments,
+      and Notable Points. Cite any relevant context where appropriate.
+    prompt: |
+      Research and gather facts about the following topic. Be thorough and well-organized.
+
+      Topic: {{input}}
+    max_tokens: 3000
+
+  - id: synthesize
+    type: llm
+    provider: anthropic
+    model: claude-opus-4-7
+    system: |
+      You are an expert analyst who synthesizes raw research notes into polished,
+      structured reports. Write in a professional tone with clear sections and
+      logical flow.
+    prompt: |
+      Synthesize the following research notes into a well-structured report.
+      Include: Introduction, Key Findings (with subsections), Analysis, and Conclusion.
+
+      Research notes:
+      {{input}}
+    max_tokens: 4096
+
+  - id: summarize
+    type: llm
+    provider: openai
+    model: gpt-4o
+    system: |
+      You write concise executive summaries. Use exactly 3 bullet points.
+      Each bullet should be one sentence capturing a critical insight.
+    prompt: |
+      Write an executive summary with exactly 3 bullet points for this report:
+
+      {{input}}
+    max_tokens: 300
+
+  - id: save_report
+    type: file
+    action: write
+    path: ./reports/{{timestamp}}-report.md
+    content: |
+      # Research Report
+      Generated: {{timestamp}}
+
+      ## Executive Summary
+
+      {{stages.summarize.output}}
+
+      ---
+
+      ## Full Report
+
+      {{stages.synthesize.output}}
+
+      ---
+
+      ## Raw Research Notes
+
+      {{stages.gather.output}}

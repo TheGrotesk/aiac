@@ -1,0 +1,66 @@
+name: Code Review Pipeline
+description: Multi-provider code review — analyze, suggest fixes, save report, and rate severity
+version: "1.0"
+
+stages:
+  - id: analyze
+    type: llm
+    provider: anthropic
+    model: claude-sonnet-4-6
+    system: |
+      You are an expert code reviewer. You identify bugs, security vulnerabilities,
+      performance issues, and code quality problems. Be thorough but concise.
+    prompt: |
+      Analyze the following code for bugs, security issues, and code quality problems.
+      Provide a structured review with sections for: Bugs, Security Issues, Code Quality,
+      and Performance.
+
+      Code to review:
+      {{input}}
+    max_tokens: 2048
+
+  - id: suggest
+    type: llm
+    provider: openai
+    model: gpt-4o
+    system: |
+      You are a senior software engineer providing actionable code improvement suggestions.
+      Focus on practical, specific fixes rather than general advice.
+    prompt: |
+      Based on this code analysis, suggest specific, actionable fixes with code examples
+      where applicable. Prioritize by impact (critical first).
+
+      Analysis:
+      {{input}}
+    max_tokens: 2048
+
+  - id: save_review
+    type: file
+    action: write
+    path: ./reviews/review-{{timestamp}}.md
+    content: |
+      # Code Review Report
+      Generated: {{timestamp}}
+
+      ## Analysis
+
+      {{stages.analyze.output}}
+
+      ## Suggested Fixes
+
+      {{stages.suggest.output}}
+
+  - id: rate_severity
+    type: llm
+    provider: anthropic
+    model: claude-haiku-4-5-20251001
+    system: |
+      You are a triage assistant. Respond with exactly one word: 'critical', 'warning', or 'ok'.
+      - critical: security vulnerabilities, data loss risks, or crashes
+      - warning: bugs, bad practices, or performance issues
+      - ok: only minor style or quality suggestions
+    prompt: |
+      Based on this code analysis, reply with only 'critical', 'warning', or 'ok':
+
+      {{stages.analyze.output}}
+    max_tokens: 10

@@ -1,0 +1,72 @@
+# Option B — the GitHub Action posts the PR comment after aiac finishes.
+# Remove the `post_comment` stage from pr-review.yaml when using this approach,
+# or keep it — the action step below overwrites any duplicate comments anyway.
+#
+# Use this when you want more control over comment formatting, deduplication,
+# or when you prefer keeping all GitHub API calls in the Action YAML.
+#
+# Workflow file: startup-workflows/workflows/ci/pr-review.yaml (without post_comment stage)
+
+name: PR Code Review (Option B — action posts comment)
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install aiac
+        run: |
+          git clone https://github.com/your-org/aiac.git /tmp/aiac
+          cd /tmp/aiac && npm ci && npm run build && npm link
+
+      - name: Generate PR diff
+        run: |
+          git diff origin/${{ github.base_ref }}...HEAD \
+            -- '*.ts' '*.tsx' '*.js' '*.jsx' '*.py' '*.go' \
+            | head -c 60000 \
+            > /tmp/pr_diff.txt
+          echo "Diff size: $(wc -c < /tmp/pr_diff.txt) bytes"
+
+      - name: Run aiac PR review
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          # --output captures the final stage output (the compiled report)
+          aiac run startup-workflows/workflows/ci/pr-review.yaml \
+            --prompt "PR #${{ github.event.pull_request.number }}" \
+            --output /tmp/aiac_pr_review.md \
+            --fresh
+
+      - name: Post PR comment
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh pr comment ${{ github.event.pull_request.number }} \
+            --body-file /tmp/aiac_pr_review.md \
+            --repo ${{ github.repository }}
+
+      # Optional: update instead of duplicate on re-runs.
+      # Replace the step above with this to edit the existing bot comment:
+      #
+      # - name: Post or update PR comment
+      #   uses: marocchino/sticky-pull-request-comment@v2
+      #   with:
+      #     path: /tmp/aiac_pr_review.md
+      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

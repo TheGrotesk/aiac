@@ -1,0 +1,52 @@
+# Option A — the aiac workflow posts the PR comment itself via a shell stage.
+# The workflow YAML includes a `post_comment` stage that runs `gh pr comment`.
+# Simpler: no extra steps in this file beyond running aiac.
+#
+# Workflow file: startup-workflows/workflows/ci/pr-review.yaml
+
+name: PR Code Review (Option A — workflow posts comment)
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write   # needed for gh pr comment
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # full history needed for accurate diffs
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install aiac
+        run: |
+          git clone https://github.com/your-org/aiac.git /tmp/aiac
+          cd /tmp/aiac && npm ci && npm run build && npm link
+
+      - name: Generate PR diff
+        run: |
+          git diff origin/${{ github.base_ref }}...HEAD \
+            -- '*.ts' '*.tsx' '*.js' '*.jsx' '*.py' '*.go' \
+            | head -c 60000 \
+            > /tmp/pr_diff.txt
+          echo "Diff size: $(wc -c < /tmp/pr_diff.txt) bytes"
+
+      - name: Run aiac PR review
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          aiac run startup-workflows/workflows/ci/pr-review.yaml \
+            --prompt "PR #$PR_NUMBER" \
+            --fresh

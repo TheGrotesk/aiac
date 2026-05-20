@@ -1,0 +1,366 @@
+name: Build App from Scratch
+description: |
+  Full-stack app builder. Takes your idea, produces requirements + architecture
+  with human approval gates, scaffolds code, runs the build, and generates a README.
+  Providers: Anthropic (planning), OpenAI (code gen), Gemini (tests + README).
+version: "1.0"
+
+# ─────────────────────────────────────────────────────────────────────────────
+# PHASE 1 — Requirements
+# ─────────────────────────────────────────────────────────────────────────────
+
+stages:
+  - id: plan_requirements
+    type: llm
+    provider: anthropic
+    model: claude-opus-4-7
+    system: |
+      You are a senior product manager and software architect.
+      You write clear, actionable product requirements documents.
+    prompt: |
+      A user wants to build the following app:
+
+      {{input}}
+
+      Write a Product Requirements Document (PRD) with these sections:
+      1. Executive Summary (2-3 sentences)
+      2. Core Features — MVP only (bulleted, numbered)
+      3. User Stories (5-8, format: "As a [user], I want [feature] so that [benefit]")
+      4. Tech Stack Recommendation (framework, database, auth, deployment)
+      5. Out of Scope (what we are NOT building in v1)
+      6. Success Metrics
+    max_tokens: 2000
+
+  - id: approve_requirements
+    type: input
+    message: |
+      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+      PHASE 1 · REQUIREMENTS — Please review
+      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+      {{input}}
+
+      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+      Type "yes" to approve and proceed to architecture design.
+      Or describe what you want changed:
+    placeholder: "yes  /  remove feature X, add feature Y, change tech stack to..."
+    next:
+      - condition: "output.toLowerCase().startsWith('yes') || output.toLowerCase() === 'y'"
+        stage: design_architecture
+      - stage: refine_requirements
+
+  - id: refine_requirements
+    type: llm
+    provider: anthropic
+    model: claude-opus-4-7
+    system: You are a product manager refining requirements based on user feedback.
+    prompt: |
+      Here are the original requirements:
+
+      {{stages.plan_requirements.output}}
+
+      The user provided this feedback:
+      "{{input}}"
+
+      Revise the PRD to fully address all feedback. Keep what was not mentioned.
+    max_tokens: 2000
+
+  - id: approve_refined_requirements
+    type: input
+    message: |
+      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+      PHASE 1 · REVISED REQUIREMENTS
+      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+      {{input}}
+
+      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+      Type "yes" to approve:
+    next:
+      - stage: design_architecture
+
+# ─────────────────────────────────────────────────────────────────────────────
+# PHASE 2 — Architecture
+# ─────────────────────────────────────────────────────────────────────────────
+
+  - id: design_architecture
+    type: llm
+    provider: anthropic
+    model: claude-opus-4-7
+    system: |
+      You are a software architect. You design clean, pragmatic architectures
+      that are easy to implement and maintain. Be specific with folder structure.
+    prompt: |
+      Based on these requirements:
+
+      {{input}}
+
+      Design a detailed technical architecture including:
+      1. Folder Structure — show the complete file tree
+      2. API Design — list all REST endpoints with method, path, request/response shape
+      3. Data Models — show each model/schema with fields and types
+      4. Component Architecture — main frontend components and their responsibilities
+      5. Environment Variables — list every env var the app needs
+      6. Implementation Order — step-by-step build sequence
+    max_tokens: 3000
+
+  - id: approve_architecture
+    type: input
+    message: |
+      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+      PHASE 2 · ARCHITECTURE — Please review
+      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+      {{input}}
+
+      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+      Type "yes" to approve and start code generation.
+      Or describe architectural changes:
+    placeholder: "yes  /  switch to PostgreSQL, add WebSocket support..."
+    next:
+      - condition: "output.toLowerCase().startsWith('yes') || output.toLowerCase() === 'y'"
+        stage: scaffold_project
+      - stage: refine_architecture
+
+  - id: refine_architecture
+    type: llm
+    provider: anthropic
+    model: claude-opus-4-7
+    system: You are a software architect revising a design based on feedback.
+    prompt: |
+      Original architecture:
+
+      {{stages.design_architecture.output}}
+
+      User feedback:
+      "{{input}}"
+
+      Revise the architecture to address all feedback points.
+    max_tokens: 3000
+
+  - id: approve_refined_architecture
+    type: input
+    message: |
+      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+      PHASE 2 · REVISED ARCHITECTURE
+      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+      {{input}}
+
+      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+      Type "yes" to approve:
+    next:
+      - stage: scaffold_project
+
+# ─────────────────────────────────────────────────────────────────────────────
+# PHASE 3 — Code Generation
+# ─────────────────────────────────────────────────────────────────────────────
+
+  - id: scaffold_project
+    type: shell
+    command: |
+      mkdir -p ./generated-app/{src/{routes,models,middleware,utils},frontend/{src/{components,pages,hooks},public},tests}
+      echo "Project directories created."
+
+  - id: generate_backend
+    type: llm
+    provider: openai
+    model: gpt-4o
+    system: |
+      You are an expert backend engineer. Write complete, production-ready Node.js/Express code.
+      Always include error handling, input validation, and comments for complex logic.
+      Output ONLY the code file content — no explanations, no markdown fences.
+    prompt: |
+      Using this architecture:
+
+      {{stages.design_architecture.output}}
+
+      Write the complete backend implementation:
+      - src/index.ts (Express app setup, middleware, route mounting)
+      - src/routes/ (all API route handlers)
+      - src/models/ (data models / database schemas)
+      - src/middleware/ (auth, error handling, validation)
+
+      Format your response as clearly labeled sections:
+      === FILE: src/index.ts ===
+      [code]
+      === FILE: src/routes/users.ts ===
+      [code]
+      (etc.)
+    max_tokens: 4000
+
+  - id: generate_frontend
+    type: llm
+    provider: openai
+    model: gpt-4o
+    system: |
+      You are an expert frontend engineer. Write complete, production-ready React/TypeScript code.
+      Use modern React patterns (hooks, context). Output labeled file sections only.
+    prompt: |
+      Using this architecture:
+
+      {{stages.design_architecture.output}}
+
+      And these backend APIs that are already implemented:
+
+      {{stages.generate_backend.output}}
+
+      Write the complete frontend implementation:
+      - frontend/src/App.tsx (routing, layout)
+      - frontend/src/pages/ (one file per page)
+      - frontend/src/components/ (shared UI components)
+      - frontend/src/hooks/ (data fetching hooks)
+      - frontend/package.json
+      - frontend/index.html
+
+      Format as labeled sections:
+      === FILE: frontend/src/App.tsx ===
+      [code]
+    max_tokens: 4000
+
+  - id: generate_config
+    type: llm
+    provider: openai
+    model: gpt-4o
+    system: You write project configuration files. Output labeled file sections only.
+    prompt: |
+      For this app:
+
+      {{stages.design_architecture.output}}
+
+      Generate these config files:
+      - package.json (root, with scripts: dev, build, test)
+      - tsconfig.json
+      - .env.example (all env vars with placeholder values)
+      - .gitignore
+      - docker-compose.yml (app + database)
+
+      Format as labeled sections:
+      === FILE: package.json ===
+      [code]
+    max_tokens: 2000
+
+  - id: generate_tests
+    type: llm
+    provider: gemini
+    model: gemini-2.0-flash
+    system: |
+      You write comprehensive test suites. Cover happy paths, edge cases, and error cases.
+      Output labeled file sections only.
+    prompt: |
+      Write tests for this backend implementation:
+
+      {{stages.generate_backend.output}}
+
+      Architecture context:
+      {{stages.design_architecture.output}}
+
+      Generate:
+      - tests/api.test.ts (integration tests for all API endpoints)
+      - tests/unit/ (unit tests for models and utilities)
+
+      Use Jest + supertest. Format as labeled file sections.
+    max_tokens: 3000
+
+  - id: save_all_code
+    type: file
+    action: write
+    path: ./generated-app/GENERATED_CODE.md
+    content: |
+      # Generated App — {{timestamp}}
+
+      ## Requirements
+      {{stages.plan_requirements.output}}
+
+      ---
+
+      ## Architecture
+      {{stages.design_architecture.output}}
+
+      ---
+
+      ## Backend
+      {{stages.generate_backend.output}}
+
+      ---
+
+      ## Frontend
+      {{stages.generate_frontend.output}}
+
+      ---
+
+      ## Config
+      {{stages.generate_config.output}}
+
+      ---
+
+      ## Tests
+      {{stages.generate_tests.output}}
+
+# ─────────────────────────────────────────────────────────────────────────────
+# PHASE 4 — README + Final Review
+# ─────────────────────────────────────────────────────────────────────────────
+
+  - id: generate_readme
+    type: llm
+    provider: gemini
+    model: gemini-2.0-flash
+    system: You write excellent developer-facing README files.
+    prompt: |
+      Write a comprehensive README.md for this app.
+
+      Requirements:
+      {{stages.plan_requirements.output}}
+
+      Architecture:
+      {{stages.design_architecture.output}}
+
+      Config files:
+      {{stages.generate_config.output}}
+
+      Include: project description, features, prerequisites, quick start,
+      environment variables table, API reference, folder structure, contributing guide.
+    max_tokens: 2000
+
+  - id: save_readme
+    type: file
+    action: write
+    path: ./generated-app/README.md
+    content: "{{input}}"
+
+  - id: final_review
+    type: input
+    message: |
+      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+      PHASE 4 · BUILD COMPLETE — Final Review
+      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+      All files have been generated and saved to ./generated-app/
+
+      README preview:
+      ────────────────────────────────────────────────────────────
+      {{stages.generate_readme.output}}
+      ────────────────────────────────────────────────────────────
+
+      Generated files:
+        • ./generated-app/GENERATED_CODE.md   (all code)
+        • ./generated-app/README.md
+
+      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+      Type "ship it" to finalize, or any notes for the summary:
+    placeholder: "ship it  /  notes for the build summary..."
+
+  - id: build_summary
+    type: llm
+    provider: anthropic
+    model: claude-haiku-4-5-20251001
+    system: You write concise build summaries for developers.
+    prompt: |
+      Write a short build summary (5-8 bullet points) for:
+
+      App idea: {{vars.original_input}}
+      Requirements: {{stages.plan_requirements.output}}
+      User's final note: {{input}}
+
+      Cover: what was built, tech stack used, files generated, next steps to run it.
+    max_tokens: 500

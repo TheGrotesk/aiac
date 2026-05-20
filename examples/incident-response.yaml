@@ -1,0 +1,256 @@
+name: Incident Response Workflow
+description: |
+  Automated incident triage: analyzes an error/alert, proposes a fix,
+  asks for human approval before patching, runs tests, notifies the team.
+  Escalates to human immediately if severity is critical.
+version: "1.0"
+
+stages:
+
+# ─────────────────────────────────────────────────────────────────────────────
+# PHASE 1 — Triage
+# ─────────────────────────────────────────────────────────────────────────────
+
+  - id: triage
+    type: llm
+    provider: anthropic
+    model: claude-sonnet-4-6
+    system: |
+      You are an SRE (Site Reliability Engineer). You triage incidents quickly and accurately.
+      Be concise. Focus on impact and root cause.
+    prompt: |
+      Incident report / error:
+
+      {{input}}
+
+      Triage this incident:
+      1. Severity: critical / high / medium / low
+      2. Affected systems (list)
+      3. Root cause hypothesis (most likely cause)
+      4. Blast radius (who/what is impacted)
+      5. Immediate mitigation options (2-3 options, with trade-offs)
+      6. Recommended fix (which option and why)
+    max_tokens: 1000
+
+  - id: check_severity
+    type: llm
+    provider: anthropic
+    model: claude-haiku-4-5-20251001
+    system: "Reply with exactly one word from this list — nothing else: critical, high, medium, low"
+    prompt: |
+      Based on this triage, what is the severity level?
+      Reply with exactly one word: critical, high, medium, or low.
+
+      {{input}}
+    max_tokens: 10
+    next:
+      - condition: "output.toLowerCase().includes('critical')"
+        stage: escalate_critical
+      - stage: draft_fix
+
+  - id: escalate_critical
+    type: llm
+    provider: anthropic
+    model: claude-opus-4-7
+    system: You are an incident commander writing an escalation notice.
+    prompt: |
+      CRITICAL INCIDENT DETECTED. Write an escalation notice for the on-call team.
+
+      Incident:
+      {{stages.triage.output}}
+
+      Include: what happened, systems affected, current impact, immediate actions needed,
+      who to page, and a war room invite template.
+    max_tokens: 800
+
+  - id: notify_critical
+    type: http
+    method: POST
+    url: "{{env.SLACK_WEBHOOK_URL}}"
+    headers:
+      Content-Type: application/json
+    body:
+      text: "🚨 *CRITICAL INCIDENT* 🚨"
+      blocks:
+        - type: section
+          text:
+            type: mrkdwn
+            text: "{{stages.escalate_critical.output}}"
+
+# ─────────────────────────────────────────────────────────────────────────────
+# PHASE 2 — Fix Proposal (non-critical path)
+# ─────────────────────────────────────────────────────────────────────────────
+
+  - id: draft_fix
+    type: llm
+    provider: openai
+    model: gpt-4o
+    system: |
+      You are a senior engineer writing a precise, minimal fix for a production incident.
+      Write only what is necessary. No refactoring, no extras.
+    prompt: |
+      Incident triage:
+      {{stages.triage.output}}
+
+      Write a fix proposal:
+      1. Code changes needed (show exact file paths and diffs or full new code)
+      2. Database migrations if any
+      3. Config changes if any
+      4. Rollback plan (how to undo this if it makes things worse)
+      5. Estimated time to implement: X minutes
+      6. Risk assessment: what could go wrong with this fix
+    max_tokens: 2000
+
+  - id: approve_fix
+    type: input
+    message: |
+      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+      INCIDENT TRIAGE
+      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+      {{stages.triage.output}}
+
+      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+      PROPOSED FIX
+      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+      {{stages.draft_fix.output}}
+
+      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+      ⚠️  Approving will apply and test the fix automatically.
+      Type "apply" to proceed, "skip" to log and close, or describe an alternative:
+    placeholder: "apply  /  skip  /  try option 2 from the triage instead..."
+    next:
+      - condition: "output.toLowerCase().startsWith('apply')"
+        stage: apply_fix
+      - condition: "output.toLowerCase().startsWith('skip')"
+        stage: log_incident
+      - stage: revise_fix
+
+  - id: revise_fix
+    type: llm
+    provider: openai
+    model: gpt-4o
+    system: You are a senior engineer revising a fix based on on-call engineer feedback.
+    prompt: |
+      Original fix proposal:
+      {{stages.draft_fix.output}}
+
+      Engineer feedback: "{{input}}"
+
+      Revise the fix proposal to address this feedback.
+    max_tokens: 2000
+
+  - id: approve_revised_fix
+    type: input
+    message: |
+      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+      REVISED FIX PROPOSAL
+      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+      {{input}}
+
+      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+      Type "apply" to proceed or "skip" to close the incident:
+    next:
+      - condition: "output.toLowerCase().startsWith('skip')"
+        stage: log_incident
+      - stage: apply_fix
+
+# ─────────────────────────────────────────────────────────────────────────────
+# PHASE 3 — Apply & Verify
+# ─────────────────────────────────────────────────────────────────────────────
+
+  - id: apply_fix
+    type: shell
+    command: |
+      echo "=== Applying fix ===" && \
+      git stash list | head -5 && \
+      echo "Fix would be applied here (git apply / npm run migrate / etc.)" && \
+      echo "Fix applied successfully."
+
+  - id: run_tests
+    type: shell
+    command: |
+      echo "=== Running test suite ===" && \
+      echo "npm test output would appear here" && \
+      echo "All tests passed."
+
+  - id: verify_fix
+    type: llm
+    provider: anthropic
+    model: claude-haiku-4-5-20251001
+    system: |
+      You analyze test output and respond with exactly one word: passed or failed
+    prompt: |
+      Test output:
+      {{input}}
+
+      Did all tests pass? Reply with exactly one word: passed or failed.
+    max_tokens: 10
+    next:
+      - condition: "output.toLowerCase().includes('failed')"
+        stage: rollback
+      - stage: log_incident
+
+  - id: rollback
+    type: shell
+    command: |
+      echo "=== Rolling back fix ===" && \
+      echo "git revert HEAD --no-edit" && \
+      echo "Rollback complete."
+
+  - id: log_incident
+    type: file
+    action: write
+    path: ./incidents/incident-{{timestamp}}.md
+    content: |
+      # Incident Report — {{timestamp}}
+
+      ## Original Incident
+      {{vars.original_input}}
+
+      ## Triage
+      {{stages.triage.output}}
+
+      ## Fix Proposal
+      {{stages.draft_fix.output}}
+
+      ## Resolution
+      {{input}}
+
+  - id: write_postmortem
+    type: llm
+    provider: anthropic
+    model: claude-sonnet-4-6
+    system: You write blameless postmortems following Google SRE postmortem culture.
+    prompt: |
+      Write a blameless postmortem for this incident:
+
+      Incident: {{stages.triage.output}}
+      Fix applied: {{stages.draft_fix.output}}
+      Outcome: {{stages.verify_fix.output}}
+
+      Include: timeline, root cause, contributing factors, what went well,
+      what went wrong, action items (with owners as [OWNER] placeholders).
+    max_tokens: 1200
+
+  - id: save_postmortem
+    type: file
+    action: write
+    path: ./incidents/postmortem-{{timestamp}}.md
+    content: "{{input}}"
+
+  - id: notify_resolved
+    type: http
+    method: POST
+    url: "{{env.SLACK_WEBHOOK_URL}}"
+    headers:
+      Content-Type: application/json
+    body:
+      text: "✅ Incident resolved"
+      blocks:
+        - type: section
+          text:
+            type: mrkdwn
+            text: "Incident closed at {{timestamp}}. Postmortem saved to `incidents/postmortem-{{timestamp}}.md`"

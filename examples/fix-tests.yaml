@@ -1,0 +1,83 @@
+name: Fix Tests
+description: |
+  Runs tests, analyzes failures with full codebase context,
+  applies fixes, and loops until all tests pass. No human input required.
+version: "1.0"
+
+stages:
+  - id: initial_run
+    type: shell
+    command: npm test 2>&1 || true
+
+  - id: check_already_passing
+    type: llm
+    provider: anthropic
+    model: claude-haiku-4-5-20251001
+    system: "Reply with exactly one word: passing or failing"
+    prompt: |
+      Test output:
+      {{input}}
+
+      Are the tests passing? Reply with one word: passing or failing.
+    max_tokens: 10
+    next:
+      - condition: "output.toLowerCase().includes('passing')"
+        stage: all_done
+      - stage: fix_loop
+
+  - id: fix_loop
+    type: loop
+    max_iterations: 6
+    until: "!stages.run_tests.output.toLowerCase().includes('fail') && !stages.run_tests.output.toLowerCase().includes('error')"
+    stages:
+      - id: analyze
+        type: llm
+        provider: anthropic
+        model: claude-sonnet-4-6
+        system: |
+          You are a TypeScript engineer fixing failing tests.
+          Output ONLY file content using === FILE: path === blocks. No prose.
+        files:
+          - src/**/*.ts
+          - tests/**/*.ts
+          - "*.config.*"
+        prompt: |
+          Test failures:
+          {{stages.run_tests.output}}
+
+          Analyze the failures and output corrected files.
+          Fix the source files — not the tests, unless the tests are clearly wrong.
+          Every output file must be complete (no "// ... rest unchanged").
+        max_tokens: 4096
+
+      - id: apply_fixes
+        type: shell
+        command: |
+          node -e "
+            const fs = require('fs'), path = require('path');
+            const text = fs.readFileSync('/tmp/aiac_fix_output.txt', 'utf-8');
+            const parts = text.split(/^=== FILE: (.+?) ===/m);
+            let applied = 0;
+            for (let i = 1; i < parts.length; i += 2) {
+              const filePath = parts[i].trim();
+              const content = parts[i + 1] ? parts[i + 1].replace(/^\n/, '') : '';
+              fs.mkdirSync(path.dirname(filePath), { recursive: true });
+              fs.writeFileSync(filePath, content, 'utf-8');
+              applied++;
+            }
+            console.log(applied + ' file(s) patched.');
+          "
+
+      - id: run_tests
+        type: shell
+        command: npm test 2>&1 || true
+
+  - id: all_done
+    type: llm
+    provider: anthropic
+    model: claude-haiku-4-5-20251001
+    prompt: |
+      Test results: {{stages.run_tests.output}}
+
+      Write a one-paragraph summary: how many tests pass, what was fixed (if anything).
+    max_tokens: 300

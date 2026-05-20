@@ -1,0 +1,250 @@
+name: Startup Content Pipeline
+description: |
+  Takes a product description and generates a full content package:
+  landing page copy, blog post, and social media kit.
+  Two editorial approval gates with feedback loops.
+version: "1.0"
+
+stages:
+
+# ─────────────────────────────────────────────────────────────────────────────
+# PHASE 1 — Brand Voice & Positioning
+# ─────────────────────────────────────────────────────────────────────────────
+
+  - id: define_positioning
+    type: llm
+    provider: anthropic
+    model: claude-opus-4-7
+    system: |
+      You are a brand strategist and copywriter for tech startups.
+      You create sharp, differentiated positioning that resonates with developers and founders.
+    prompt: |
+      Product: {{input}}
+
+      Create a brand positioning brief:
+      1. One-liner (max 10 words, no buzzwords)
+      2. Value proposition (2 sentences)
+      3. Target audience (3 personas with pain points)
+      4. Key differentiators vs alternatives (3 bullets)
+      5. Tone of voice (3 adjectives + 1 example sentence)
+      6. Words to avoid
+    max_tokens: 1000
+
+  - id: approve_positioning
+    type: input
+    message: |
+      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+      BRAND POSITIONING — Editorial Review
+      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+      {{input}}
+
+      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+      Approve this positioning? (yes / feedback):
+    placeholder: "yes  /  make it more technical, less startup-y, change persona #2..."
+    next:
+      - condition: "output.toLowerCase().startsWith('yes') || output.toLowerCase() === 'y'"
+        stage: write_landing_page
+      - stage: refine_positioning
+
+  - id: refine_positioning
+    type: llm
+    provider: anthropic
+    model: claude-opus-4-7
+    system: You are a brand strategist refining positioning based on editorial feedback.
+    prompt: |
+      Original positioning:
+      {{stages.define_positioning.output}}
+
+      Editorial feedback: "{{input}}"
+
+      Revise the positioning brief addressing all feedback.
+    max_tokens: 1000
+
+  - id: approve_refined_positioning
+    type: input
+    message: |
+      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+      REVISED POSITIONING
+      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+      {{input}}
+
+      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+      Type "yes" to proceed:
+    next:
+      - stage: write_landing_page
+
+# ─────────────────────────────────────────────────────────────────────────────
+# PHASE 2 — Content Generation (all 3 run from same positioning)
+# ─────────────────────────────────────────────────────────────────────────────
+
+  - id: write_landing_page
+    type: llm
+    provider: anthropic
+    model: claude-opus-4-7
+    system: |
+      You are a conversion copywriter. You write landing pages that convert visitors
+      into signups. Use the PAS (Problem-Agitate-Solution) and AIDA frameworks.
+    prompt: |
+      Positioning brief:
+      {{input}}
+
+      Write complete landing page copy:
+      - Hero: headline + subheadline + CTA button text
+      - Problem section (2-3 sentences, empathize with the pain)
+      - Solution section (3 feature blocks: icon name + headline + 2-sentence description)
+      - Social proof section (3 placeholder testimonials with name/title/company)
+      - Pricing section (3 tiers: Free / Pro / Enterprise with 4 bullets each)
+      - FAQ (5 questions + answers)
+      - Footer CTA
+    max_tokens: 2500
+
+  - id: write_blog_post
+    type: llm
+    provider: openai
+    model: gpt-4o
+    system: |
+      You are a technical content writer. You write blog posts that rank on Google
+      and get shared by developers. Use storytelling + data + actionable takeaways.
+    prompt: |
+      Positioning brief:
+      {{stages.define_positioning.output}}
+
+      Write a 1200-word blog post for the product launch.
+      Format: Title, TL;DR (3 bullets), Introduction (hook), 3 main sections with H2s,
+      Code example or concrete illustration, Conclusion with CTA.
+      Target keyword: include the product one-liner naturally 3-4 times.
+    max_tokens: 2000
+
+  - id: write_social_kit
+    type: llm
+    provider: gemini
+    model: gemini-2.0-flash
+    system: |
+      You are a social media manager for tech products.
+      You write copy that gets engagement without sounding like marketing spam.
+    prompt: |
+      Positioning brief:
+      {{stages.define_positioning.output}}
+
+      Write a social media launch kit:
+      - Twitter/X launch thread (8 tweets, numbered, with emoji)
+      - LinkedIn post (professional tone, 150 words)
+      - Hacker News "Show HN" post (title + first comment, honest and direct)
+      - Product Hunt tagline + first comment (under 260 chars tagline)
+      - 5 short tweet variations for ongoing promotion
+    max_tokens: 2000
+
+# ─────────────────────────────────────────────────────────────────────────────
+# PHASE 3 — Editorial Review & Save
+# ─────────────────────────────────────────────────────────────────────────────
+
+  - id: editorial_review
+    type: input
+    message: |
+      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+      CONTENT PACKAGE — Final Editorial Review
+      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+      LANDING PAGE COPY:
+      ──────────────────
+      {{stages.write_landing_page.output}}
+
+      BLOG POST:
+      ──────────
+      {{stages.write_blog_post.output}}
+
+      SOCIAL KIT:
+      ───────────
+      {{stages.write_social_kit.output}}
+
+      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+      Type "publish" to save all files and finalize.
+      Or describe what needs to change across the package:
+    placeholder: "publish  /  make the blog post shorter, change CTA to 'Get started free'..."
+    next:
+      - condition: "output.toLowerCase().startsWith('publish')"
+        stage: save_landing_page
+      - stage: revise_package
+
+  - id: revise_package
+    type: llm
+    provider: anthropic
+    model: claude-opus-4-7
+    system: You are an editorial director consolidating feedback across multiple content pieces.
+    prompt: |
+      The content team has produced this package:
+
+      LANDING PAGE: {{stages.write_landing_page.output}}
+      BLOG POST: {{stages.write_blog_post.output}}
+      SOCIAL KIT: {{stages.write_social_kit.output}}
+
+      Editorial feedback: "{{input}}"
+
+      Rewrite the entire package applying the feedback consistently across all pieces.
+      Use the same section headers as before.
+    max_tokens: 6000
+
+  - id: confirm_revised_package
+    type: input
+    message: |
+      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+      REVISED CONTENT PACKAGE
+      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+      {{input}}
+
+      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+      Type "publish" to save:
+    next:
+      - stage: save_landing_page
+
+  - id: save_landing_page
+    type: file
+    action: write
+    path: ./content/landing-page-{{timestamp}}.md
+    content: |
+      # Landing Page Copy
+      Generated: {{timestamp}}
+
+      {{stages.write_landing_page.output}}
+
+  - id: save_blog_post
+    type: file
+    action: write
+    path: ./content/blog-post-{{timestamp}}.md
+    content: |
+      # Blog Post
+      Generated: {{timestamp}}
+
+      {{stages.write_blog_post.output}}
+
+  - id: save_social_kit
+    type: file
+    action: write
+    path: ./content/social-kit-{{timestamp}}.md
+    content: |
+      # Social Media Kit
+      Generated: {{timestamp}}
+
+      {{stages.write_social_kit.output}}
+
+  - id: publish_summary
+    type: llm
+    provider: anthropic
+    model: claude-haiku-4-5-20251001
+    system: You write brief launch checklists.
+    prompt: |
+      The content package for this product is ready:
+
+      {{stages.define_positioning.output}}
+
+      Files saved:
+      - landing-page-{{timestamp}}.md
+      - blog-post-{{timestamp}}.md
+      - social-kit-{{timestamp}}.md
+
+      Write a 6-step launch checklist: what to do with these files next
+      (where to post, who to notify, what to track).
+    max_tokens: 400
