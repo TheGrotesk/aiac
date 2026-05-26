@@ -11,7 +11,7 @@ const program = new Command();
 program
   .name('aiac')
   .description('AI as Code — run AI agent workflows from YAML files')
-  .version('0.1.0');
+  .version('0.1.1');
 
 // ── aiac run ─────────────────────────────────────────────────────────────────
 

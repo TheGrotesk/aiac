@@ -59,6 +59,12 @@ aiac run pr-review.yaml --prompt "$(git diff main...HEAD)"
 ## Install
 
 ```bash
+npm install -g @thegrotesk/aiac
+```
+
+Or build from source:
+
+```bash
 git clone https://github.com/TheGrotesk/aiac.git
 cd aiac
 npm install && npm run build
