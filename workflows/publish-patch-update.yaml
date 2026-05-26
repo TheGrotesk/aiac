@@ -1,0 +1,86 @@
+name: Publish Patch Update
+description: Bump the patch version, update all version references, commit and push. The GitHub Actions release workflow will create the tag and GitHub release automatically.
+version: "1.0"
+
+stages:
+  - id: read_version
+    type: shell
+    command: node -p "require('./package.json').version"
+
+  - id: confirm
+    type: input
+    message: |
+      Current version: {{stages.read_version.output}}
+      This will bump the PATCH version → x.y.Z
+
+      Type "yes" to continue or anything else to abort:
+    next:
+      - condition: "['yes','y'].includes(output.toLowerCase().trim())"
+        stage: bump
+      - stage: abort
+
+  - id: abort
+    type: shell
+    command: echo "Aborted — no changes made."
+
+  - id: bump
+    type: shell
+    command: npm version patch --no-git-tag-version
+
+  - id: read_new_version
+    type: shell
+    command: node -p "require('./package.json').version"
+
+  - id: update_docs
+    type: shell
+    command: >
+      node -e "
+        const fs = require('fs');
+        const v = require('./package.json').version;
+        const file = './docs/index.html';
+        const updated = fs.readFileSync(file, 'utf8')
+          .replace(/v\d+\.\d+\.\d+/g, 'v' + v);
+        fs.writeFileSync(file, updated);
+        console.log('docs/index.html updated to v' + v);
+      "
+
+  - id: update_readme
+    type: shell
+    command: >
+      node -e "
+        const fs = require('fs');
+        const v = require('./package.json').version;
+        const file = './README.md';
+        const updated = fs.readFileSync(file, 'utf8')
+          .replace(/version-\d+\.\d+\.\d+-6366f1/g, 'version-' + v + '-6366f1')
+          .replace(/releases\/tag\/v\d+\.\d+\.\d+/g, 'releases/tag/v' + v);
+        fs.writeFileSync(file, updated);
+        console.log('README.md updated to v' + v);
+      "
+
+  - id: ask_stage_mode
+    type: input
+    message: |
+      Ready to commit version {{stages.read_new_version.output}}.
+
+      How would you like to stage files?
+        all    — git add . (include any other uncommitted changes)
+        only   — stage only version-related files (package.json, docs, README)
+    next:
+      - condition: "output.toLowerCase().trim() === 'all'"
+        stage: stage_all
+      - stage: stage_only
+
+  - id: stage_all
+    type: shell
+    command: git add .
+
+  - id: stage_only
+    type: shell
+    command: git add package.json package-lock.json docs/index.html README.md
+
+  - id: commit_and_push
+    type: shell
+    command: >
+      git commit -m "bump version to {{stages.read_new_version.output}}" &&
+      git push
