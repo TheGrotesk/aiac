@@ -1,17 +1,21 @@
 #!/usr/bin/env node
 import { readFileSync, writeFileSync, existsSync } from 'fs';
 import { resolve } from 'path';
+import { createRequire } from 'module';
 import { Command } from 'commander';
 import chalk from 'chalk';
 import * as dotenv from 'dotenv';
 import { loadWorkflow, runWorkflow, resolveTemplates } from './runner.js';
+
+const require = createRequire(import.meta.url);
+const { version } = require('../package.json') as { version: string };
 
 const program = new Command();
 
 program
   .name('aiac')
   .description('AI as Code — run AI agent workflows from YAML files')
-  .version('0.1.1');
+  .version(version);
 
 // ── aiac run ─────────────────────────────────────────────────────────────────
 
