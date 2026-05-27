@@ -1,5 +1,7 @@
 <div align="center">
 
+<img src="docs/assets/logo.png" alt="orcaix" width="80" />
+
 # orcaix
 
 **Orcaix — run AI agent workflows defined in YAML**

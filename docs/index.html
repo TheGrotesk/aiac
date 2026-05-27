@@ -66,6 +66,16 @@
       padding: 20px 20px 16px;
       border-bottom: 1px solid var(--sidebar-border);
       margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .sidebar-logo img {
+      width: 32px;
+      height: 32px;
+      border-radius: 6px;
+      flex-shrink: 0;
     }
 
     .sidebar-logo .wordmark {
@@ -247,6 +257,14 @@
       padding: 48px 0 32px;
       border-bottom: 1px solid var(--border);
       margin-bottom: 8px;
+    }
+
+    .hero-logo {
+      width: 64px;
+      height: 64px;
+      border-radius: 14px;
+      margin-bottom: 20px;
+      display: block;
     }
 
     .hero-badge {
@@ -453,8 +471,11 @@
 <!-- ── Sidebar ─────────────────────────────────────────────────────────────── -->
 <nav class="sidebar">
   <div class="sidebar-logo">
-    <div class="wordmark">orca<span>ix</span></div>
-    <div class="tagline">orcaix · v0.1.5</div>
+    <img src="assets/logo.png" alt="orcaix logo" />
+    <div>
+      <div class="wordmark">orca<span>ix</span></div>
+      <div class="tagline">orcaix · v0.1.5</div>
+    </div>
   </div>
 
   <div class="nav-section">
@@ -527,6 +548,7 @@
 ═══════════════════════════════════════════════════════════════════════════ -->
 <section id="overview">
 <div class="hero">
+  <img src="assets/logo.png" alt="orcaix" class="hero-logo" />
   <div class="hero-badge">⚡ v0.1.5</div>
   <h1>orcaix</h1>
   <p>Define AI agent workflows in YAML. Chain LLMs, shell commands, file operations, and HTTP calls into repeatable pipelines — with human approval gates, branching logic, and built-in resume from failure.</p>
